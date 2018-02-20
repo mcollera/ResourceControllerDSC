@@ -41,27 +41,38 @@
         $PropertiesHashTable.Add($prop.Key, $prop.Value)
     }
 
-    $validation = Assert-Property -ResourceName $ResourceName -Properties $PropertiesHashTable -Method $functionName
+    $dscResource = Get-DscResource -Name $ResourceName
 
-    if($validation.error)
+    Import-Module $dscResource.Path -Function $functionName -Prefix $ResourceName
+    
+    try
     {
-        throw $validation.errorMessage
+        Test-ParameterValidation -Name $functionName.Replace("-","-$ResourceName") -Values $PropertiesHashTable
     }
-        
-    Import-Module $validation.resourcePath -Function $functionName -Prefix $ResourceName
-    $splatProperties = $validation.properties
+    catch
+    {
+        throw $_.Exception.Message
+    }
+
+    $splatProperties = Get-ValidParameters -Name $functionName.Replace("-","-$ResourceName") -Values $PropertiesHashTable
             
-    $get = &"$($validation.resourceType)\Get-${ResourceName}TargetResource" @splatProperties
+    $get = & "Get-${ResourceName}TargetResource" @splatProperties
 
     $CimGetResults = New-Object -TypeName 'System.Collections.ObjectModel.Collection`1[Microsoft.Management.Infrastructure.CimInstance]'
 
     foreach($row in $get.Keys.GetEnumerator())
     {
         $value = $get.$row
-        $CimGetResults += New-CimInstance -ClientOnly -Namespace "root/Microsoft/Windows/DesiredStateConfiguration" -ClassName "MSFT_KeyValuePair" -Property @{
-                                                                                                                                                                    Key = "$row"
-                                                                                                                                                                    Value = "$value"
-                                                                                                                                                                }
+
+        $CimProperties = @{
+            Namespace = 'root/Microsoft/Windows/DesiredStateConfiguration'
+            ClassName = "MSFT_KeyValuePair"
+            Property = @{
+                            Key = "$row"
+                            Value = "$value"
+                        }
+        }
+        $CimGetResults += New-CimInstance -ClientOnly @CimProperties
     }
 
     $returnValue = @{
@@ -115,17 +126,22 @@ function Test-TargetResource
         $PropertiesHashTable.Add($prop.Key, $prop.Value)
     }
 
-    $validation = Assert-Property -ResourceName $ResourceName -Properties $PropertiesHashTable -Method $functionName
+    $dscResource = Get-DscResource -Name $ResourceName
 
-    if($validation.error)
+    Import-Module $dscResource.Path -Function $functionName -Prefix $ResourceName
+    
+    try
     {
-        throw $validation.errorMessage
+        Test-ParameterValidation -Name $functionName.Replace("-","-$ResourceName") -Values $PropertiesHashTable
     }
-        
-    Import-Module $validation.resourcePath -Function $functionName -Prefix $ResourceName
-    $splatProperties = $validation.properties
+    catch
+    {
+        throw $_.Exception.Message
+    }
+
+    $splatProperties = Get-ValidParameters -Name $functionName.Replace("-","-$ResourceName") -Values $PropertiesHashTable
             
-    $result = &"$($validation.resourceType)\Test-${ResourceName}TargetResource" @splatProperties
+    $result = &"Test-${ResourceName}TargetResource" @splatProperties
     
     return $result
 }
@@ -174,18 +190,22 @@ function Set-TargetResource
         $PropertiesHashTable.Add($prop.Key, $prop.Value)
     }
     
-    $validation = Assert-Property -ResourceName $ResourceName -Properties $PropertiesHashTable -Method $functionName
+    $dscResource = Get-DscResource -Name $ResourceName
+
+    Import-Module $dscResource.Path -Function $functionName -Prefix $ResourceName
     
-    if($validation.error)
+    try
     {
-        throw $validation.errorMessage
+        Test-ParameterValidation -Name $functionName.Replace("-","-$ResourceName") -Values $PropertiesHashTable
+    }
+    catch
+    {
+        throw $_.Exception.Message
     }
     
-    Import-Module $validation.resourcePath -Function $functionName -Prefix $ResourceName
+    $splatProperties = Get-ValidParameters -Name $functionName.Replace("-","-$ResourceName") -Values $PropertiesHashTable
     
-    $splatProperties = $validation.properties
-    
-    &"$($validation.resourceType)\Set-${ResourceName}TargetResource" @splatProperties -Verbose
+    &"Set-${ResourceName}TargetResource" @splatProperties -Verbose
 
     if($SupressReboot)
     {
@@ -207,7 +227,7 @@ function Test-MaintenanceWindow
 
     $Now = Get-Date
 
-    $start = Get-Date -Hour $EffectiveDate.Hour -Minute $EffectiveDate.Minute -Second 0 -Millisecond 0
+    $start = Get-Date -Year $EffectiveDate.Year -Day $EffectiveDate.Day -Month $EffectiveDate.Month -Hour $EffectiveDate.Hour -Minute $EffectiveDate.Minute -Second 0 -Millisecond 0
 
     $End = $start.AddHours($Duration)
     
@@ -226,182 +246,114 @@ function Test-MaintenanceWindow
     }
 }
 
-function Test-Validation
+function Assert-Validation
 {
     param(
-        [Parameter(Mandatory = $true)]
-        [object[]]
-        $Validation,
+        [parameter(Mandatory = $true)]
+        $element,
 
-        [Parameter()]
-        [object]
-        $value
+        [parameter(Mandatory = $true)]
+        [psobject]
+        $ParameterMetadata
     )
 
-    $types = @(
-        "ValidateNotNull",
-        "ValidateNotNullOrEmpty",
-        "ValidateLength",
-        "ValidateCount",
-        "ValidateRange",
-        "ValidateSet",
-        "ValidatePattern",
-        "ValidateScript"
-    )
-
-    foreach($type in $types)
+    $BindingFlags = 'static','nonpublic','instance'
+    $errorMessage = @()
+    foreach($attribute in $ParameterMetadata.Attributes)
     {
-        $criteria = ($Validation | Select-String "(?<=\[$type\(("")?(')?).*(?=("")?(')?\)\])").Matches.Value
-        if($criteria)
-        {
-            switch ($type)
+        try
+        {  
+            $Method = $attribute.GetType().GetMethod('ValidateElement',$BindingFlags)
+            if($Method)
             {
-                "ValidateNotNull"
-                    {
-                        if($null -eq $value)
-                        {
-                            return $false
-                        }
-                        break
-                    }
-                "ValidateNotNullOrEmpty"
-                    {
-                        if([string]::IsNullOrEmpty($value))
-                        {
-                            return $false
-                        }
-                        break
-                    }
-                "ValidateLength"
-                    {
-                        $length = $criteria -split ","
-                        if($value.length -lt $length[0])
-                        {
-                            return $false
-                        }
-                        elseif($value.Length -gt $length[1])
-                        {
-                            return $false
-                        }
-                        break
-                    }
-                "ValidateCount"
-                    {
-                        
-                        break
-                    }
-                "ValidateRange"
-                    {
-                        $length = $criteria -split ","
-                        if([int]::Parse($value) -lt [int]::Parse($length[0]))
-                        {
-                            return $false
-                        }
-                        elseif([int]::Parse($value) -gt [int]::Parse($length[1]))
-                        {
-                            return $false
-                        }
-                        break
-                    }
-                "ValidateSet"
-                    {
-                        if(-not $criteria.Split(",").Trim("'"," ","""").ToLower().Contains($value.ToLower()))
-                        {
-                            return $false
-                        }
-                        break
-                    }
-                "ValidatePattern"
-                    {
-                        if($value -notmatch $criteria.Trim("'",""""))
-                        {
-                            return $false
-                        }
-                        break
-                    }
-                "ValidateScript"
-                    {
-                        $scriptblock = [ScriptBlock]::Create($criteria.Replace('{','').Replace('}','').Replace("`$_", "`$args[0]"))
-                        $result = Invoke-Command -ScriptBlock $scriptblock -ArgumentList $value
-                        if($result -eq $false)
-                        {
-                            return $false
-                        }
-                        break;
-                    }
+                $Method.Invoke($attribute,@($element))
             }
+
+        }
+        catch
+        {
+            $errorMessage += "Error on parameter $($ParameterMetadata.Name): $($_.Exception.InnerException.Message)"
         }
     }
-    return $true
+    if($errorMessage.Count -gt 0)
+    {
+        throw $errorMessage -join "`n"
+    }
 }
 
-function Assert-Property
+function Test-ParameterValidation
 {
-    [CmdletBinding()]
-    Param
-    (
-        [Parameter(Mandatory = $true)]
-        [string]
-        $ResourceName,
+    param(
 
-        [Parameter(Mandatory = $true)]
-        [HashTable]
-        $Properties,
-
-        [Parameter(Mandatory = $true)]
+        [parameter(Mandatory = $true)]
         [string]
-        $Method
+        $Name,
+
+        [parameter(Mandatory = $true)]
+        [Hashtable]
+        $Values
     )
 
-    $resource = Get-DscResource -Name $ResourceName -Syntax
-    $resourcePath = $resource.Path
-    $resourceParameters = $resource.Properties
-    $propertiesToPass = @{}
-
-    $errorMessage = "`n"
-    $error = $false
-
-    $mandatoryParameters = $resourceParameters.Where({$_.IsMandatory -eq $true})
-    foreach($param in $mandatoryParameters)
+    $ignoreResourceParameters = [System.Management.Automation.Cmdlet]::CommonParameters + [System.Management.Automation.Cmdlet]::OptionalCommonParameters
+    $errorMessage = @()
+    $command = Get-Command -Name $name
+    $parameterNames = $command.Parameters
+    foreach($name in $parameterNames.Keys)
     {
-        if(-not $Properties.ContainsKey($param.Name))
+        if($ignoreResourceParameters -notcontains $name)
         {
-            $errorMessage += "Resource $ResourceName is missing mandatory parameter '$($param.Name)'`n"
-            $error = $true
-        }
-    }
-
-
-    $parser = [System.Management.Automation.Language.Parser]::ParseFile($resourcePath,[ref]$null,[ref]$null)
-    $ast = $parser.EndBlock.Statements.Where({$_.Name -eq $Method}).Body.ParamBlock.Parameters
-    $charReplace = '{0}|{1}' -f "'", '"'
-    $select = @{ n = 'Name'; e = { $_.Name.VariablePath.UserPath } }, @{ n = 'ValidationString'; e = {$_.Extent.Text } }
- 
-    $params = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.ParameterAst] }, $true) | Select-Object $select -Unique | sort-object -Property Name -Unique
-
-    foreach($param in $params)
-    {
-        if($Properties.($param.Name))
-        {
-            $pass = Test-Validation -Validation $param.ValidationString -value $Properties.($param.Name)
-            if(-not $pass){
-                $errorMessage += "'$($param.Name)' does not meet validation requirement`n"
-                $error = $true
+            $metadata = $command.Parameters.$($name)
+            if($Values.$($name))
+            {
+                try
+                {
+                    Assert-Validation -element $Values.$($name) -ParameterMetadata $metadata
+                }
+                catch
+                {
+                    $errorMessage += $_.Exception.Message
+                }
             }
-            $propertiesToPass.Add($param.Name,$Properties.($param.Name))
+            elseif($($metadata.Attributes | Where-Object {$_.TypeId.Name -eq "ParameterAttribute"}).Mandatory)
+            {
+                $errorMessage += "Parameter '$name' is mandatory."
+            }
         }
-
     }
-
-    $data = @{
-        resourcePath = $resourcePath
-        resourceType = $resource.ResourceType
-        properties = $propertiesToPass
-        error = $error
-        errorMessage = $errorMessage
+    if($errorMessage.Count -gt 0)
+    {
+        throw $errorMessage -join "`n"
     }
-    return $data
 }
 
+function Get-ValidParameters
+{
+    param(
+
+        [parameter(Mandatory = $true)]
+        [string]
+        $Name,
+
+        [parameter(Mandatory = $true)]
+        [Hashtable]
+        $Values
+    )
+
+    $ignoreResourceParameters = [System.Management.Automation.Cmdlet]::CommonParameters + [System.Management.Automation.Cmdlet]::OptionalCommonParameters
+    $command = Get-Command -Name $name
+    $parameterNames = $command.Parameters
+    $properties = @{}
+    foreach($name in $parameterNames.Keys)
+    {
+        if($ignoreResourceParameters -notcontains $name)
+        {
+            if($Values.ContainsKey($name))
+            {
+                $properties.Add($Name, $Values.$name)
+            }
+        }
+    }
+    return $properties
+}
 
 Export-ModuleMember -Function *-TargetResource
