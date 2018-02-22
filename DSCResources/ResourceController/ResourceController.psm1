@@ -25,12 +25,8 @@
         $SupressReboot,
 
         [Parameter()]
-        [DateTime]
-        $EffectiveDate,
-
-        [Parameter()]
-        [uint32]
-        $Duration
+        [Microsoft.Management.Infrastructure.CimInstance[]]
+        $MaintenanceWindow
     )
 
     $functionName = "Get-TargetResource"
@@ -81,8 +77,7 @@
         Properties = $Properties
         Result = $CimGetResults
         SupressReboot = $SupressReboot
-        EffectiveDate = $EffectiveDate
-        Duration = $Duration
+        MaintenanceWindow = $MaintenanceWindow
     }
     
     return $returnValue
@@ -110,12 +105,8 @@ function Test-TargetResource
         $SupressReboot,
 
         [Parameter()]
-        [DateTime]
-        $EffectiveDate,
-
-        [Parameter()]
-        [uint32]
-        $Duration
+        [Microsoft.Management.Infrastructure.CimInstance[]]
+        $MaintenanceWindow
     )
 
     $functionName = "Test-TargetResource"
@@ -132,7 +123,7 @@ function Test-TargetResource
     
     try
     {
-        Test-ParameterValidation -Name $functionName.Replace("-","-$ResourceName") -Values $PropertiesHashTable
+        $null = Test-ParameterValidation -Name $functionName.Replace("-","-$ResourceName") -Values $PropertiesHashTable
     }
     catch
     {
@@ -168,19 +159,36 @@ function Set-TargetResource
         $SupressReboot,
 
         [Parameter()]
-        [DateTime]
-        $EffectiveDate,
-
-        [Parameter()]
-        [uint32]
-        $Duration
+        [Microsoft.Management.Infrastructure.CimInstance[]]
+        $MaintenanceWindow
     )
 
-    if(-not $(Test-MaintenanceWindow -EffectiveDate $EffectiveDate -Duration $Duration))
+    foreach($window in $MaintenanceWindow)
     {
-        Write-Verbose "You are outside the maintenance window. Set will not continue."
-        return
-    }
+        $maintenanceWindowProperties = @{}
+        $params = @("Frequency",
+                    "StartTime",
+                    "EndTime",
+                    "DaysofWeek",
+                    "Week",
+                    "Days",
+                    "StartDate",
+                    "EndDate")
+
+        foreach($param in $params)
+        {
+            if($window.$param)
+            {
+                $maintenanceWindowProperties.Add($param, $window.$param)
+            }
+        }
+
+        if(-not $(Test-MaintenanceWindow @maintenanceWindowProperties))
+        {
+            Write-Verbose "You are outside the maintenance window. No changes will be made."
+            return
+        }
+    }    
 
     $functionName = "Set-TargetResource"
 
@@ -216,34 +224,174 @@ function Set-TargetResource
 function Test-MaintenanceWindow
 {
     param(
-        [Parameter()]
-        [Nullable[DateTime]]
-        $EffectiveDate,
+        [Parameter(Mandatory = $true)]
+        [string]
+        $Frequency,
 
         [Parameter()]
-        [Nullable[int]]
-        $Duration
+        [Nullable[DateTime]]
+        $StartTime,
+
+        [Parameter()]
+        [Nullable[DateTime]]
+        $EndTime,
+
+        [Parameter()]
+        [string[]]
+        $DaysofWeek,
+
+        [Parameter()]
+        [int[]]
+        $Week,
+
+        [Parameter()]
+        [int[]]
+        $Days,
+
+        [Parameter()]
+        [Nullable[DateTime]]
+        $StartDate,
+
+        [Parameter()]
+        [Nullable[DateTime]]
+        $EndDate
     )
 
     $Now = Get-Date
 
-    $start = Get-Date -Year $EffectiveDate.Year -Day $EffectiveDate.Day -Month $EffectiveDate.Month -Hour $EffectiveDate.Hour -Minute $EffectiveDate.Minute -Second 0 -Millisecond 0
+    if($StartDate -and $EndDate)
+    {
+        if($StartDate -ge $EndDate)
+        {
+            throw "StartDate cannot be after the EndDate"
+        }
+    }
 
-    $End = $start.AddHours($Duration)
-    
-    if($Now -lt $EffectiveDate)
+    if(-not $StartDate)
+    {
+        $StartDate = [DateTime]::MinValue
+    }
+
+    if(-not $EndDate)
+    {
+        $EndDate = [DateTime]::MaxValue
+    }
+
+    $StartDate = Get-Date -Date $StartDate -Hour 0 -Minute 0 -Second 0 -Millisecond 0
+    $EndDate = Get-Date -Date $EndDate -Hour 23 -Minute 59 -Second 59 -Millisecond 999
+
+    if($Now -lt $StartDate -or $Now -gt $EndDate)
     {
         return $false
     }
 
-    if($Now -ge $Start -and $Now -lt $End)
+    if(-not $EndTime)
     {
-        return $true
+        $EndTime = Get-Date -Date $Now -Hour 23 -Minute 59 -Second 59 -Millisecond 999
     }
     else
     {
+        $EndTime = Get-Date -Date $Now -Hour $EndTime.Hour -Minute $EndTime.Minute -Second $EndTime.Second -Millisecond $EndTime.Millisecond
+    }
+
+    if(-not $StartTime)
+    {
+        $StartTime = Get-Date -Date $Now -Hour 0 -Minute 0 -Second 0 -Millisecond 0
+    }
+    else
+    {
+        $StartTime = Get-Date -Date $Now -Hour $StartTime.Hour -Minute $StartTime.Minute -Second $StartTime.Second -Millisecond $StartTime.Millisecond
+    }
+
+    switch ($Frequency)
+    {
+        'Daily' {
+
+            if(-not $DaysofWeek)
+            {
+                throw "Error"
+            }
+
+            if(-not ($DaysofWeek -Contains $now.DayOfWeek))
+            {
+                return $false
+            }
+        }
+        'Weekly' {
+            
+            if(-not $DaysofWeek -or -not $Week)
+            {
+                throw "Error"
+            }
+
+            if(-not ($DaysofWeek -Contains $now.DayOfWeek))
+            {
+                return $false
+            }
+
+            $dow = $now.DayOfWeek
+            $WorkingDate = Get-Date -Year $Now.Year -Month $Now.Month -Day 1
+            $weekCount = 0
+
+            for($i = 1; $i -le $now.Day; $i++){
+                if($WorkingDate.DayOfWeek -eq $dow)
+                {
+                    $weekCount++
+                }
+                $WorkingDate = $WorkingDate.AddDays(1)
+            }
+
+            if(-not ($Week -contains $weekCount))
+            {
+                #check if last day
+                if($Week -contains 0)
+                {
+                    $WorkingDate = Get-Date -Year $Now.Year -Month $Now.Month -Day $([DateTime]::DaysInMonth($Now.Year,$Now.Month))
+                    while($dow -ne $WorkingDate.DayOfWeek)
+                    {
+                        $WorkingDate = $WorkingDate.AddDays(-1)
+                    }
+                    if($WorkingDate.Day -ne $now.Day)
+                    {
+                        return $false
+                    }
+                }
+                else
+                {
+                    return $false
+                }
+            }
+        }
+        'Monthly' {
+
+            if(-not $Days)
+            {
+                throw "error"
+            }
+            if(-not ($Days -contains $Now.Day))
+            {
+                if($Days -contains 0)
+                {
+                    $lastDayofMonth = $([DateTime]::DaysInMonth($Now.Year,$Now.Month))
+                    if($lastDayofMonth -ne $Now.Day)
+                    {
+                        return $false
+                    }
+                }
+                else
+                {
+                    return $false
+                }
+            }
+        }
+    }
+
+    if($Now -lt $StartTime -or $now -gt $EndTime)
+    {
         return $false
     }
+
+    return $true
 }
 
 function Assert-Validation

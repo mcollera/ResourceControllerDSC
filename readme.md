@@ -21,7 +21,7 @@ Please check out common DSC Resources [contributing guidelines](
 
 ## Resources
 
-* [**ResourceController**](#ResourceController): Provides the ability to add a maintenance window and supress reboots.
+* [**ResourceController**](#ResourceController): Provides the ability to add a maintenance window and supress reboots. Maintenance windows and Supress reboots only effect Set-TargetResource. Get and Test will always run for reporting.
 
 ### **ResourceController**
 
@@ -31,9 +31,18 @@ Please check out common DSC Resources [contributing guidelines](
 
 * **[Hashtable] Properties:** The properties you want to pass to the resource you want to run.
 
-* **[DateTime] EffectiveDate:** The start date you allow the resource to run
-
-* **[int] Duration:** The time in hours you want the resource to run for.
+* **[MaintenanceWindow] MaintenanceWindow:** Object representing a maintenance window
+    DaysofWeek
+    Week
+    Days
+    * **[string] Frequency:** The frequency the schedule should run. _{ Daily | Weekly | Monthly }_
+    * **[DateTime] StartTime:** The start time the resource is aloud to run Set-TargetResource when the day is inside the maintenance window
+    * **[DateTime ] EndTime:** The end time the resource is aloud to run Set-TargetResource when the day is inside the maintenance window
+    * **[DateTime] StartDate:** The date the resource is aloud to run Set-TargetResource.
+    * **[DateTime] EndDate:** The date the resource will no longer run Set-TargetResource.
+    * **[String[]] DaysofWeek:** The days of week Set-TargetResource will run. _{ Sunday | Monday | Tuesday | Wednesday | Thursday | Friday | Saturday }_
+    * **[int[] Week:** The week in the month you want Set-TargetResource to run. {0} represents the last week of the month. _{ 0 | 1 | 2 | 3 | 4 }_
+    * **[int[]] Days:** The day in the month you want Set-TargetResource to run. {0} represents the last day of the month. _{ 0-31 }_
 
 * **[bool] SupressReboot:** Whether you should supress a forced reboot. _{ True | False }_
 

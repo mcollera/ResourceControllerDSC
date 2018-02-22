@@ -1,5 +1,4 @@
 #requires -Version 4.0 -Modules Pester
-#requires -RunAsAdministrator
 
 #region Setup for tests
 $DSCResourceName = 'ResourceController'
@@ -8,7 +7,7 @@ Import-Module "$($PSScriptRoot)\..\..\DSCResources\$($DSCResourceName)\$($DSCRes
 Import-Module "$($PSScriptRoot)\..\TestHelper.psm1" -Force
 
 #endregion
-
+<#
 Describe "$DSCResourceName\Get-TargetResource" {
     Context "Calling Get-TargetResource on xRegistry" {
         Mock -CommandName Test-ParameterValidation -MockWith {} -Verifiable -ModuleName $DSCResourceName
@@ -43,9 +42,11 @@ Describe "$DSCResourceName\Get-TargetResource" {
 }
 
 Describe "$DSCResourceName\Test-TargetResource" {
+    function Test-xRegistryTargetResource {}
     Context "Calling Test-TargetResource on xRegistry where Key does not exist" {
         Mock -CommandName Test-ParameterValidation -MockWith {} -Verifiable -ModuleName $DSCResourceName
         Mock -CommandName Get-ValidParameters -MockWith {@{ValueName = 'Test'; Key = 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey'}} -ModuleName $DSCResourceName -Verifiable
+        Mock -CommandName Test-xRegistryTargetResource -MockWith {return $false}
         $ContextParams = @{
                             InstanceName = 'Test'
                             ResourceName = 'xRegistry'
@@ -73,7 +74,8 @@ Describe "$DSCResourceName\Test-TargetResource" {
         Context "Calling Test-TargetResource on xRegistry where Key does exist" {
         $ComputerName = Get-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName -Name ComputerName
         Mock -CommandName Test-ParameterValidation -MockWith {} -Verifiable -ModuleName $DSCResourceName
-        Mock -CommandName Get-ValidParameters -MockWith {@{ValueType = 'String'; ValueData = $ComputerName.ComputerName; ValueName = 'ComputerName'; Key = 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName'}} -ModuleName $DSCResourceName -Verifiable
+        Mock -CommandName Get-ValidParameters -MockWith {@{ValueType = 'String'; ValueData = "ComputerName"; ValueName = 'ComputerName'; Key = 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName'}} -ModuleName $DSCResourceName -Verifiable
+        Mock -CommandName Test-xRegistryTargetResource -MockWith {return $true}
         $ContextParams = @{
                             InstanceName = 'Test'
                             ResourceName = 'xRegistry'
@@ -108,6 +110,10 @@ Describe "$DSCResourceName\Set-TargetResource" {
         Mock -CommandName Get-ValidParameters -MockWith {@{ValueName = 'Test'; Key = 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey'}} -ModuleName $DSCResourceName -Verifiable
         Mock -CommandName Set-xRegistryTargetResource -MockWith {}
         Mock -CommandName Test-MaintenanceWindow -MockWith {$true} -ModuleName $DSCResourceName
+
+        $Windows = @(
+            New-CIMWindow -Frequency 'Daily' 
+        )
         $ContextParams = @{
                             InstanceName = 'Test'
                             ResourceName = 'xRegistry'
@@ -115,6 +121,7 @@ Describe "$DSCResourceName\Set-TargetResource" {
                                             $(New-CimProperty -Key ValueName -Value 'Test'),
                                             $(New-CimProperty -Key Key -Value 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey')
                                             )
+                            MaintenanceWindow = $Windows
                         }
 
         $SetResult = & "$($DSCResourceName)\Set-TargetResource" @ContextParams
@@ -141,6 +148,10 @@ Describe "$DSCResourceName\Set-TargetResource" {
         Mock -CommandName Get-ValidParameters -MockWith {@{ValueName = 'Test'; Key = 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey'}} -ModuleName $DSCResourceName -Verifiable
         Mock -CommandName Set-xRegistryTargetResource -MockWith {}
         Mock -CommandName Test-MaintenanceWindow -MockWith {$false} -ModuleName $DSCResourceName
+        
+        $Windows = @(
+            New-CIMWindow -Frequency 'Daily' 
+        )
         $ContextParams = @{
                             InstanceName = 'Test'
                             ResourceName = 'xRegistry'
@@ -148,6 +159,7 @@ Describe "$DSCResourceName\Set-TargetResource" {
                                             $(New-CimProperty -Key ValueName -Value 'Test'),
                                             $(New-CimProperty -Key Key -Value 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey')
                                             )
+                            MaintenanceWindow = $Windows
                         }
 
         $SetResult = & "$($DSCResourceName)\Set-TargetResource" @ContextParams
@@ -191,15 +203,15 @@ Describe "$DSCResourceName\Set-TargetResource" {
             $global:DSCMachineStatus | should be 0
         }
     }
-}
+}#>
 
 InModuleScope $DSCResourceName {
     Describe "Test-MaintenanceWindow" {
-        Context "Calling Test-MaintenanceWindow outside of window" {
-
+        Context "Calling Test-MaintenanceWindow outside of window Daily without time" {
+            Mock Get-Date {return [DateTime]::new("2018","01","02")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
-                                EffectiveDate = (Get-Date).AddDays(-365)
-                                Duration = 2
+                                Frequency = 'Daily'
+                                DaysofWeek = 'Monday'
                             }
 
             $Window = & "Test-MaintenanceWindow" @ContextParams
@@ -209,11 +221,89 @@ InModuleScope $DSCResourceName {
             }
         }
 
-        Context "Calling Test-MaintenanceWindow inside of window" {
-
+        Context "Calling Test-MaintenanceWindow outside of window Daily with time" {
+            Mock Get-Date {return [DateTime]::new("2018","01","01","11","31","0")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
-                                EffectiveDate = (Get-Date).AddHours(-1)
-                                Duration = 3
+                                Frequency = 'Daily'
+                                DaysofWeek = 'Monday'
+                                StartTime = "11:00am"
+                                EndTime = "11:30am"
+                            }
+
+            $Window = & "Test-MaintenanceWindow" @ContextParams
+
+            It 'Should return false' {
+                $window | should be $false
+            }
+        }
+
+        Context "Calling Test-MaintenanceWindow outside of window Weekly without time" {
+            Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            $ContextParams = @{
+                                Frequency = 'Weekly'
+                                DaysofWeek = 'Monday'
+                                Week = @(2,3)
+                            }
+
+            $Window = & "Test-MaintenanceWindow" @ContextParams
+
+            It 'Should return false' {
+                $window | should be $false
+            }
+        }
+
+        Context "Calling Test-MaintenanceWindow outside of window Weekly with time" {
+            Mock Get-Date {return [DateTime]::new("2018","01","01","11","31","0")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            $ContextParams = @{
+                                Frequency = 'Weekly'
+                                DaysofWeek = 'Monday'
+                                StartTime = "11:00am"
+                                EndTime = "11:30am"
+                                Week = @(1)
+                            }
+
+            $Window = & "Test-MaintenanceWindow" @ContextParams
+
+            It 'Should return false' {
+                $window | should be $false
+            }
+        }
+
+        Context "Calling Test-MaintenanceWindow outside of window Monthly without time" {
+            Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            $ContextParams = @{
+                                Frequency = 'Monthly'
+                                Days = @(2,3,4)
+                            }
+
+            $Window = & "Test-MaintenanceWindow" @ContextParams
+
+            It 'Should return false' {
+                $window | should be $false
+            }
+        }
+
+        Context "Calling Test-MaintenanceWindow outside of window Monthly with time" {
+            Mock Get-Date {return [DateTime]::new("2018","01","01","11","31","0")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            $ContextParams = @{
+                                Frequency = 'Monthly'
+                                Days = 1
+                                StartTime = "11:00am"
+                                EndTime = "11:30am"
+                            }
+
+            $Window = & "Test-MaintenanceWindow" @ContextParams
+
+            It 'Should return false' {
+                $window | should be $false
+            }
+        }
+
+        Context "Calling Test-MaintenanceWindow inside of window Daily without time" {
+            Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            $ContextParams = @{
+                                Frequency = 'Daily'
+                                DaysofWeek = 'Monday'
                             }
 
             $Window = & "Test-MaintenanceWindow" @ContextParams
@@ -222,8 +312,192 @@ InModuleScope $DSCResourceName {
                 $window | should be $true
             }
         }
-    }
 
+        Context "Calling Test-MaintenanceWindow inside of window Daily with time" {
+            Mock Get-Date {return [DateTime]::new("2018","01","01","11","25","0")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            $ContextParams = @{
+                                Frequency = 'Daily'
+                                DaysofWeek = 'Monday'
+                                StartTime = "11:00am"
+                                EndTime = "11:30am"
+                            }
+
+            $Window = & "Test-MaintenanceWindow" @ContextParams
+
+            It 'Should return true' {
+                $window | should be $true
+            }
+        }
+
+        Context "Calling Test-MaintenanceWindow inside of window Weekly without time" {
+            Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            $ContextParams = @{
+                                Frequency = 'Weekly'
+                                DaysofWeek = 'Monday'
+                                Week = @(1,2,3)
+                            }
+
+            $Window = & "Test-MaintenanceWindow" @ContextParams
+
+            It 'Should return true' {
+                $window | should be $true
+            }
+        }
+
+        Context "Calling Test-MaintenanceWindow inside of window Weekly with time" {
+            Mock Get-Date {return [DateTime]::new("2018","01","01","11","27","0")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            $ContextParams = @{
+                                Frequency = 'Weekly'
+                                DaysofWeek = 'Monday'
+                                StartTime = "11:00am"
+                                EndTime = "11:30am"
+                                Week = @(1)
+                            }
+
+            $Window = & "Test-MaintenanceWindow" @ContextParams
+
+            It 'Should return true' {
+                $window | should be $true
+            }
+        }
+
+        Context "Calling Test-MaintenanceWindow inside of window Monthly without time" {
+            Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            $ContextParams = @{
+                                Frequency = 'Monthly'
+                                Days = @(1,3,4)
+                            }
+
+            $Window = & "Test-MaintenanceWindow" @ContextParams
+
+            It 'Should return true' {
+                $window | should be $true
+            }
+        }
+
+        Context "Calling Test-MaintenanceWindow inside of window Monthly with time" {
+            Mock Get-Date {return [DateTime]::new("2018","01","01","11","28","0")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            $ContextParams = @{
+                                Frequency = 'Monthly'
+                                Days = 1
+                                StartTime = "11:00am"
+                                EndTime = "11:30am"
+                            }
+
+            $Window = & "Test-MaintenanceWindow" @ContextParams
+
+            It 'Should return true' {
+                $window | should be $true
+            }
+        }
+
+        Context "Calling Test-MaintenanceWindow inside of window but before startdate" {
+            Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            $ContextParams = @{
+                                Frequency = 'Monthly'
+                                Days = 1
+                                StartDate = "02-01-2018"
+                            }
+
+            $Window = & "Test-MaintenanceWindow" @ContextParams
+
+            It 'Should return false' {
+                $window | should be $false
+            }
+        }
+
+        Context "Calling Test-MaintenanceWindow inside of window but after enddate" {
+            Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            $ContextParams = @{
+                                Frequency = 'Monthly'
+                                Days = 1
+                                EndDate = "12-31-2017"
+                            }
+
+            $Window = & "Test-MaintenanceWindow" @ContextParams
+
+            It 'Should return false' {
+                $window | should be $false
+            }
+        }
+
+        Context "Calling Test-MaintenanceWindow inside of window but after Startdate no enddate" {
+            Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            $ContextParams = @{
+                                Frequency = 'Monthly'
+                                Days = 1
+                                StartDate = "12-31-2017"
+                            }
+
+            $Window = & "Test-MaintenanceWindow" @ContextParams
+
+            It 'Should return true' {
+                $window | should be $true
+            }
+        }
+
+        Context "Calling Test-MaintenanceWindow inside of window but before enddate no startdate" {
+            Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            $ContextParams = @{
+                                Frequency = 'Monthly'
+                                Days = 1
+                                EndDate = "01-31-2018"
+                            }
+
+            $Window = & "Test-MaintenanceWindow" @ContextParams
+
+            It 'Should return true' {
+                $window | should be $true
+            }
+        }
+
+        Context "Calling Test-MaintenanceWindow inside of window and between start and end date" {
+            Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            $ContextParams = @{
+                                Frequency = 'Monthly'
+                                Days = 1
+                                EndDate = "01-31-2018"
+                                StartDate = "12-31-2017"
+                            }
+
+            $Window = & "Test-MaintenanceWindow" @ContextParams
+
+            It 'Should return true' {
+                $window | should be $true
+            }
+        }
+
+        Context "Calling Test-MaintenanceWindow inside of window but not between start and end date" {
+            Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            $ContextParams = @{
+                                Frequency = 'Monthly'
+                                Days = 1
+                                EndDate = "01-31-2018"
+                                StartDate = "01-15-2018"
+                            }
+
+            $Window = & "Test-MaintenanceWindow" @ContextParams
+
+            It 'Should return false' {
+                $window | should be $false
+            }
+        }
+
+        Context "Calling Test-MaintenanceWindow with start date greater than end date" {
+            Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            $ContextParams = @{
+                                Frequency = 'Monthly'
+                                Days = 1
+                                StartDate = "01-31-2018"
+                                EndDate = "01-15-2018"
+                            }
+
+            It 'Should throw error' {
+                {Test-MaintenanceWindow @ContextParams} | should throw
+            }
+        }
+    }
+    <#
     
     Describe "Get-ValidParameters" {
         $ResourceName = "xRegistry"
@@ -346,5 +620,5 @@ InModuleScope $DSCResourceName {
                 { Test-ParameterValidation @ContextParams } | should not throw
             }
         }
-    }
+    }#>
 }
