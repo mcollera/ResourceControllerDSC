@@ -7,7 +7,7 @@ Import-Module "$($PSScriptRoot)\..\..\DSCResources\$($DSCResourceName)\$($DSCRes
 Import-Module "$($PSScriptRoot)\..\TestHelper.psm1" -Force
 
 #endregion
-<#
+
 Describe "$DSCResourceName\Get-TargetResource" {
     Context "Calling Get-TargetResource on xRegistry" {
         Mock -CommandName Test-ParameterValidation -MockWith {} -Verifiable -ModuleName $DSCResourceName
@@ -203,7 +203,7 @@ Describe "$DSCResourceName\Set-TargetResource" {
             $global:DSCMachineStatus | should be 0
         }
     }
-}#>
+}
 
 InModuleScope $DSCResourceName {
     Describe "Test-MaintenanceWindow" {
@@ -497,7 +497,6 @@ InModuleScope $DSCResourceName {
             }
         }
     }
-    <#
     
     Describe "Get-ValidParameters" {
         $ResourceName = "xRegistry"
@@ -620,5 +619,5 @@ InModuleScope $DSCResourceName {
                 { Test-ParameterValidation @ContextParams } | should not throw
             }
         }
-    }#>
+    }
 }
