@@ -9,12 +9,17 @@ Import-Module "$($PSScriptRoot)\..\TestHelper.psm1" -Force
 #endregion
 
 Describe "$DSCResourceName\Get-TargetResource" {
+    function Get-xRegistry2TargetResource {}
     Context "Calling Get-TargetResource on xRegistry" {
+        $ResourceName = 'xRegistry2'
+        Mock -CommandName Import-Module -MockWith {} -ModuleName $DSCResourceName
+        Mock -CommandName Get-DSCResource -MockWith { @{Path = 'FilePath'} } -ModuleName $DSCResourceName
         Mock -CommandName Test-ParameterValidation -MockWith {} -Verifiable -ModuleName $DSCResourceName
         Mock -CommandName Get-ValidParameters -MockWith {@{ValueName = 'Test2'; Key = 'HKEY_LOCAL_MACHINE\SOFTWARE\test'; ValueData = 'Test String'; ValueType = 'String'}} -ModuleName $DSCResourceName -Verifiable
+        Mock -CommandName "Get-${ResourceName}TargetResource" -MockWith {return @{Test = 'Test'}}
         $ContextParams = @{
                             InstanceName = 'Test'
-                            ResourceName = 'xRegistry'
+                            ResourceName = $ResourceName
                             Properties = @(
                                             $(New-CimProperty -Key ValueName -Value 'Test2'),
                                             $(New-CimProperty -Key Key -Value 'HKEY_LOCAL_MACHINE\SOFTWARE\test'),
@@ -42,14 +47,16 @@ Describe "$DSCResourceName\Get-TargetResource" {
 }
 
 Describe "$DSCResourceName\Test-TargetResource" {
-    function Test-xRegistryTargetResource {}
+    function Test-xRegistry2TargetResource {}
+    Mock -CommandName Import-Module -MockWith {} -ModuleName $DSCResourceName
+    Mock -CommandName Get-DSCResource -MockWith { @{Path = 'FilePath'} } -ModuleName $DSCResourceName
     Context "Calling Test-TargetResource on xRegistry where Key does not exist" {
         Mock -CommandName Test-ParameterValidation -MockWith {} -Verifiable -ModuleName $DSCResourceName
         Mock -CommandName Get-ValidParameters -MockWith {@{ValueName = 'Test'; Key = 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey'}} -ModuleName $DSCResourceName -Verifiable
-        Mock -CommandName Test-xRegistryTargetResource -MockWith {return $false}
+        Mock -CommandName Test-xRegistry2TargetResource -MockWith {return $false}
         $ContextParams = @{
                             InstanceName = 'Test'
-                            ResourceName = 'xRegistry'
+                            ResourceName = 'xRegistry2'
                             Properties = @(
                                             $(New-CimProperty -Key ValueName -Value 'Test'),
                                             $(New-CimProperty -Key Key -Value 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey')
@@ -75,10 +82,10 @@ Describe "$DSCResourceName\Test-TargetResource" {
         $ComputerName = Get-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName -Name ComputerName
         Mock -CommandName Test-ParameterValidation -MockWith {} -Verifiable -ModuleName $DSCResourceName
         Mock -CommandName Get-ValidParameters -MockWith {@{ValueType = 'String'; ValueData = "ComputerName"; ValueName = 'ComputerName'; Key = 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName'}} -ModuleName $DSCResourceName -Verifiable
-        Mock -CommandName Test-xRegistryTargetResource -MockWith {return $true}
+        Mock -CommandName Test-xRegistry2TargetResource -MockWith {return $true}
         $ContextParams = @{
                             InstanceName = 'Test'
-                            ResourceName = 'xRegistry'
+                            ResourceName = 'xRegistry2'
                             Properties = @(
                                             $(New-CimProperty -Key ValueName -Value 'ComputerName'),
                                             $(New-CimProperty -Key Key -Value 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName'),
@@ -104,11 +111,13 @@ Describe "$DSCResourceName\Test-TargetResource" {
 }
 
 Describe "$DSCResourceName\Set-TargetResource" {
-    function Set-xRegistryTargetResource {}
+    function Set-xRegistry2TargetResource {}
+    Mock -CommandName Import-Module -MockWith {} -ModuleName $DSCResourceName
+    Mock -CommandName Get-DSCResource -MockWith { @{Path = 'FilePath'} } -ModuleName $DSCResourceName
     Context "Calling Set-TargetResource on xRegistry inside maintenace window" {
         Mock -CommandName Test-ParameterValidation -MockWith {} -Verifiable -ModuleName $DSCResourceName
         Mock -CommandName Get-ValidParameters -MockWith {@{ValueName = 'Test'; Key = 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey'}} -ModuleName $DSCResourceName -Verifiable
-        Mock -CommandName Set-xRegistryTargetResource -MockWith {}
+        Mock -CommandName Set-xRegistry2TargetResource -MockWith {}
         Mock -CommandName Test-MaintenanceWindow -MockWith {$true} -ModuleName $DSCResourceName
 
         $Windows = @(
@@ -116,7 +125,7 @@ Describe "$DSCResourceName\Set-TargetResource" {
         )
         $ContextParams = @{
                             InstanceName = 'Test'
-                            ResourceName = 'xRegistry'
+                            ResourceName = 'xRegistry2'
                             Properties = @(
                                             $(New-CimProperty -Key ValueName -Value 'Test'),
                                             $(New-CimProperty -Key Key -Value 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey')
@@ -135,7 +144,7 @@ Describe "$DSCResourceName\Set-TargetResource" {
         }
 
         It 'Should call Set-xRegistryTargetResource once' {
-            Assert-MockCalled -CommandName 'Set-xRegistryTargetResource' -Times 1 -Scope 'Context'
+            Assert-MockCalled -CommandName 'Set-xRegistry2TargetResource' -Times 1 -Scope 'Context'
         }
 
         It 'Should call Test-MaintenanceWindow once' {
@@ -146,7 +155,7 @@ Describe "$DSCResourceName\Set-TargetResource" {
     Context "Calling Set-TargetResource on xRegistry outside maintenace window" {
         Mock -CommandName Test-ParameterValidation -MockWith {} -Verifiable -ModuleName $DSCResourceName
         Mock -CommandName Get-ValidParameters -MockWith {@{ValueName = 'Test'; Key = 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey'}} -ModuleName $DSCResourceName -Verifiable
-        Mock -CommandName Set-xRegistryTargetResource -MockWith {}
+        Mock -CommandName Set-xRegistry2TargetResource -MockWith {}
         Mock -CommandName Test-MaintenanceWindow -MockWith {$false} -ModuleName $DSCResourceName
         
         $Windows = @(
@@ -154,7 +163,7 @@ Describe "$DSCResourceName\Set-TargetResource" {
         )
         $ContextParams = @{
                             InstanceName = 'Test'
-                            ResourceName = 'xRegistry'
+                            ResourceName = 'xRegistry2'
                             Properties = @(
                                             $(New-CimProperty -Key ValueName -Value 'Test'),
                                             $(New-CimProperty -Key Key -Value 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey')
@@ -173,7 +182,7 @@ Describe "$DSCResourceName\Set-TargetResource" {
         }
 
         It 'Should  not call Set-xRegistryTargetResource once' {
-            Assert-MockCalled -CommandName 'Set-xRegistryTargetResource' -Times 0 -Scope 'Context'
+            Assert-MockCalled -CommandName 'Set-xRegistry2TargetResource' -Times 0 -Scope 'Context'
         }
 
         It 'Should call Test-MaintenanceWindow once' {
@@ -184,11 +193,11 @@ Describe "$DSCResourceName\Set-TargetResource" {
     Context "Suppress Reboot equal True" {
         Mock -CommandName Test-ParameterValidation -MockWith {} -Verifiable -ModuleName $DSCResourceName
         Mock -CommandName Get-ValidParameters -MockWith {@{ValueName = 'Test'; Key = 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey'}} -ModuleName $DSCResourceName -Verifiable
-        Mock -CommandName Set-xRegistryTargetResource -MockWith {}
+        Mock -CommandName Set-xRegistry2TargetResource -MockWith {}
         Mock -CommandName Test-MaintenanceWindow -MockWith {$true} -ModuleName $DSCResourceName
         $ContextParams = @{
                             InstanceName = 'Test'
-                            ResourceName = 'xRegistry'
+                            ResourceName = 'xRegistry2'
                             SupressReboot = $true
                             Properties = @(
                                             $(New-CimProperty -Key ValueName -Value 'Test'),
@@ -499,22 +508,33 @@ InModuleScope $DSCResourceName {
     }
     
     Describe "Get-ValidParameters" {
-        $ResourceName = "xRegistry"
-        $functionName = 'Test-TargetResource'
-        $dscResource = Get-DscResource -Name $ResourceName
-        Import-Module $dscResource.Path -Function $functionName -Prefix $ResourceName
+        function Test-Function
+        {
+            [cmdletbinding()]
+            param
+            (
+                [parameter()]
+                [string]
+                $Key,
+
+                [parameter()]
+                [string]
+                $ValueName
+            )
+
+        }
         
         Context "Calling Get-ValidParameters with no extra parameters" {
 
             $ContextParams = @{
-                                Name = 'Test-xRegistryTargetResource'
+                                Name = 'Test-Function'
                                 Values = @{
                                     Key = "TestRegistryKey"
                                     ValueName = ""
                                 }
                             }
 
-            $params = & "Get-ValidParameters" @ContextParams
+            $params = Get-ValidParameters @ContextParams
 
             It 'Should return 2 params' {
                 $params.count | should be 2
@@ -524,7 +544,7 @@ InModuleScope $DSCResourceName {
         Context "Calling Get-ValidParameters with extra parameters" {
 
             $ContextParams = @{
-                                Name = 'Test-xRegistryTargetResource'
+                                Name = 'Test-Function'
                                 Values = @{
                                     Key = "TestRegistryKey"
                                     ValueName = ""
@@ -569,16 +589,27 @@ InModuleScope $DSCResourceName {
     }
 
     Describe "Test-ParameterValidation" {
-        $ResourceName = "xRegistry"
-        $functionName = 'Test-TargetResource'
-        $dscResource = Get-DscResource -Name $ResourceName
-        Import-Module $dscResource.Path -Function $functionName -Prefix $ResourceName
+        function Test-Function
+        {
+            [cmdletbinding()]
+            param
+            (
+                [parameter(Mandatory = $true)]
+                [string]
+                $Key,
+
+                [parameter(Mandatory = $true)]
+                [string]
+                $ValueName
+            )
+
+        }
 
         Context "Calling Test-ParameterValidation with value not meeting parameter requirements" {
 
             Mock -CommandName Assert-Validation -MockWith { throw "Error" }
             $ContextParams = @{
-                                Name = 'Test-xRegistryTargetResource'
+                                Name = 'Test-Function'
                                 Values = @{
                                     Key = "TestRegistryKey"
                                 }
@@ -593,7 +624,7 @@ InModuleScope $DSCResourceName {
 
             Mock -CommandName Assert-Validation -MockWith {}
             $ContextParams = @{
-                                Name = 'Test-xRegistryTargetResource'
+                                Name = 'Test-Function'
                                 Values = @{
                                     Key = "TestRegistryKey"
                                 }
@@ -608,7 +639,7 @@ InModuleScope $DSCResourceName {
 
             Mock -CommandName Assert-Validation -MockWith {}
             $ContextParams = @{
-                                Name = 'Test-xRegistryTargetResource'
+                                Name = 'Test-Function'
                                 Values = @{
                                     Key = "TestRegistryKey"
                                     ValueName = "Test"
