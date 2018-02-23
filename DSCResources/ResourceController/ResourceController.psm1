@@ -17,10 +17,6 @@
         $Properties,
 
         [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]] 
-        $Result,
-
-        [Parameter()]
         [Boolean]
         $SupressReboot,
 
@@ -106,10 +102,6 @@ function Test-TargetResource
         $Properties,
 
         [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]] 
-        $Result,
-
-        [Parameter()]
         [Boolean]
         $SupressReboot,
 
@@ -166,10 +158,6 @@ function Set-TargetResource
         [Parameter()]
         [Microsoft.Management.Infrastructure.CimInstance[]] 
         $Properties,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]] 
-        $Result,
 
         [Parameter()]
         [Boolean]

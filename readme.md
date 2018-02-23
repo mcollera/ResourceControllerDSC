@@ -58,4 +58,3 @@ Please check out common DSC Resources [contributing guidelines](
 * Initial release with the following resources:
 
   * ResourceController
-  
