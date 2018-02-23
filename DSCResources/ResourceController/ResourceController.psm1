@@ -50,8 +50,12 @@
         throw $_.Exception.Message
     }
 
+    Write-Verbose "Parameters passed in have validated succesfully."
+
     $splatProperties = Get-ValidParameters -Name $functionName.Replace("-","-$ResourceName") -Values $PropertiesHashTable
-            
+    
+    Write-Verbose "Calling Get-TargetResource"
+    
     $get = & "Get-${ResourceName}TargetResource" @splatProperties
 
     $CimGetResults = New-Object -TypeName 'System.Collections.ObjectModel.Collection`1[Microsoft.Management.Infrastructure.CimInstance]'
@@ -85,6 +89,7 @@
 
 function Test-TargetResource
 {
+    [OutputType([Boolean])]
     [CmdletBinding()]
     Param
     (
@@ -99,6 +104,10 @@ function Test-TargetResource
         [Parameter()]
         [Microsoft.Management.Infrastructure.CimInstance[]] 
         $Properties,
+
+        [Parameter()]
+        [Microsoft.Management.Infrastructure.CimInstance[]] 
+        $Result,
 
         [Parameter()]
         [Boolean]
@@ -130,8 +139,12 @@ function Test-TargetResource
         throw $_.Exception.Message
     }
 
+    Write-Verbose "Parameters passed in have validated succesfully."
+
     $splatProperties = Get-ValidParameters -Name $functionName.Replace("-","-$ResourceName") -Values $PropertiesHashTable
             
+    Write-Verbose "Calling Test-TargetResource"
+
     $result = &"Test-${ResourceName}TargetResource" @splatProperties
     
     return $result
@@ -153,6 +166,10 @@ function Set-TargetResource
         [Parameter()]
         [Microsoft.Management.Infrastructure.CimInstance[]] 
         $Properties,
+
+        [Parameter()]
+        [Microsoft.Management.Infrastructure.CimInstance[]] 
+        $Result,
 
         [Parameter()]
         [Boolean]
@@ -210,12 +227,16 @@ function Set-TargetResource
     {
         throw $_.Exception.Message
     }
+
+    Write-Verbose "Parameters passed in have validated succesfully."
     
     $splatProperties = Get-ValidParameters -Name $functionName.Replace("-","-$ResourceName") -Values $PropertiesHashTable
-    
+
+    Write-Verbose "Calling Set-TargetResource."
+
     &"Set-${ResourceName}TargetResource" @splatProperties -Verbose
 
-    if($SupressReboot)
+    if($SupressReboot -and $global:DSCMachineStatus -ne 0)
     {
         $global:DSCMachineStatus = 0
     }
@@ -333,7 +354,8 @@ function Test-MaintenanceWindow
             $WorkingDate = Get-Date -Year $Now.Year -Month $Now.Month -Day 1
             $weekCount = 0
 
-            for($i = 1; $i -le $now.Day; $i++){
+            for($i = 1; $i -le $now.Day; $i++)
+            {
                 if($WorkingDate.DayOfWeek -eq $dow)
                 {
                     $weekCount++
@@ -397,10 +419,10 @@ function Test-MaintenanceWindow
 function Assert-Validation
 {
     param(
-        [parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $true)]
         $element,
 
-        [parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $true)]
         [psobject]
         $ParameterMetadata
     )
@@ -433,11 +455,11 @@ function Test-ParameterValidation
 {
     param(
 
-        [parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $true)]
         [string]
         $Name,
 
-        [parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $true)]
         [Hashtable]
         $Values
     )
@@ -478,11 +500,11 @@ function Get-ValidParameters
 {
     param(
 
-        [parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $true)]
         [string]
         $Name,
 
-        [parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $true)]
         [Hashtable]
         $Values
     )

@@ -57,15 +57,7 @@ function New-CIMWindow
         $EndDate
     )
     $maintenanceWindowProperties = @{}
-    $params = @("Frequency",
-                "StartTime",
-                "EndTime",
-                "DaysofWeek",
-                "Week",
-                "Days",
-                "StartDate",
-                "EndDate")
-
+    
     foreach($param in $PSBoundParameters.Keys)
     {
         $maintenanceWindowProperties.Add($param, $PSBoundParameters.$param)

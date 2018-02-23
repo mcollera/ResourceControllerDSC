@@ -134,7 +134,7 @@ InModuleScope $DSCResourceName {
                                 MaintenanceWindow = $Windows
                             }
 
-            $SetResult = & "$($DSCResourceName)\Set-TargetResource" @ContextParams
+            & "$($DSCResourceName)\Set-TargetResource" @ContextParams
 
             It 'Should call Test-ParameterValidation once' {
                 Assert-MockCalled -CommandName 'Test-ParameterValidation' -ModuleName $DSCResourceName -Times 1 -Scope 'Context'
@@ -172,7 +172,7 @@ InModuleScope $DSCResourceName {
                                 MaintenanceWindow = $Windows
                             }
 
-            $SetResult = & "$($DSCResourceName)\Set-TargetResource" @ContextParams
+            & "$($DSCResourceName)\Set-TargetResource" @ContextParams
 
             It 'Should not call Test-ParameterValidation once' {
                 Assert-MockCalled -CommandName 'Test-ParameterValidation' -ModuleName $DSCResourceName -Times 0 -Scope 'Context'
@@ -207,7 +207,7 @@ InModuleScope $DSCResourceName {
                             }
 
             $global:DSCMachineStatus = 1
-            $SetResult = & "$($DSCResourceName)\Set-TargetResource" @ContextParams
+            & "$($DSCResourceName)\Set-TargetResource" @ContextParams
 
             It 'DSCMachineStatus should equal 0' {
                 $global:DSCMachineStatus | should be 0
