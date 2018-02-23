@@ -2,8 +2,8 @@
 
 #region Setup for tests
 $DSCResourceName = 'ResourceController'
-Import-Module "$($PSScriptRoot)\..\..\DSCResources\$($DSCResourceName)\$($DSCResourceName).psm1" -Force
-Import-Module "$($PSScriptRoot)\..\TestHelper.psm1" -Force -Global
+Import-Module ".\..\..\DSCResources\$($DSCResourceName)\$($DSCResourceName).psm1" -Force
+Import-Module ".\..\TestHelper.psm1" -Force -Global
 #endregion
 
 InModuleScope $DSCResourceName {
