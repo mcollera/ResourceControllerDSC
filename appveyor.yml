@@ -5,7 +5,7 @@ version: 1.0.{build}
 install:
     - git clone https://github.com/PowerShell/DscResource.Tests
     - ps: |
-        $moduleName = 'AccessControlDSC'
+        $moduleName = 'ResourceControllerDSC'
         Import-Module -Name "$env:APPVEYOR_BUILD_FOLDER\DscResource.Tests\AppVeyor.psm1"
         Import-Module -Name "$env:APPVEYOR_BUILD_FOLDER\Tests\TestHelper.psm1"
         Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
