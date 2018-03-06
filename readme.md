@@ -4,8 +4,8 @@ master: [![Build status](https://ci.appveyor.com/api/projects/status/qghpa6k5dfm
 
 dev: [![Build status](https://ci.appveyor.com/api/projects/status/qghpa6k5dfmc05i0/branch/dev?svg=true)](https://ci.appveyor.com/project/mcollera/resourcecontrollerdsc/branch/dev)
 
-The **ResourceControllerDSC** module allows you to control other DSC resources by adding an Effective date and duration so Set-TargetResource will only run during that window.
-Also allows you to supress a reboot when a resource will not.
+The **ResourceControllerDSC** module allows you to control other DSC resources by adding a Maintenance Window so Set-TargetResource will only run during that window.
+Also allows you to supress a reboot when a resource does not have the option.
 
 This project has adopted the [Microsoft Open Source Code of Conduct](
   https://opensource.microsoft.com/codeofconduct/).
