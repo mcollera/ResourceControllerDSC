@@ -21,16 +21,16 @@ ModuleVersion = '1.0'
 GUID = 'f5e50599-f412-44d7-bc7c-36b1c161bf2b'
 
 # Author of this module
-Author = 'administrator'
+Author = 'Matthew Collera'
 
 # Company or vendor of this module
-CompanyName = 'Unknown'
+CompanyName = ''
 
 # Copyright statement for this module
-Copyright = '(c) 2018 administrator. All rights reserved.'
+Copyright = '(c) 2018 Matthew Collera. All rights reserved.'
 
 # Description of the functionality provided by this module
-# Description = ''
+ Description = 'The ResourceControllerDSC module allows you to control other DSC resources by adding a Maintenance Window so Set-TargetResource will only run during that window. Allows you to supress a reboot when a resource does not have the option.'
 
 # Minimum version of the Windows PowerShell engine required by this module
   PowerShellVersion = '4.0'
@@ -95,13 +95,13 @@ PrivateData = @{
     PSData = @{
 
         # Tags applied to this module. These help with module discovery in online galleries.
-        # Tags = @()
+         Tags = @("ResourceController","dsc-resource","supress-reboot","reboot","maintenance-window","schedules-execution")
 
         # A URL to the license for this module.
-        # LicenseUri = ''
+         LicenseUri = 'https://github.com/mcollera/ResourceControllerDSC/blob/master/LICENSE'
 
         # A URL to the main website for this project.
-        # ProjectUri = ''
+         ProjectUri = 'https://github.com/mcollera/ResourceControllerDSC'
 
         # A URL to an icon representing this module.
         # IconUri = ''
