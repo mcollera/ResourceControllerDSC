@@ -3,7 +3,7 @@
 #region Setup for tests
 $DSCResourceName = 'ResourceController'
 Import-Module "$($PSScriptRoot)\..\..\DSCResources\$($DSCResourceName)\$($DSCResourceName).psm1" -Force
-Import-Module "$($PSScriptRoot)\..\HelperFunctions.psm1" -Force
+. "$($PSScriptRoot)\..\HelperFunctions.ps1" -Force
 #endregion
 
 InModuleScope $DSCResourceName {
