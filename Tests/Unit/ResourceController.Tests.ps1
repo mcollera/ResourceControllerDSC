@@ -1,13 +1,9 @@
 #requires -Version 4.0 -Modules Pester
 
-#region Setup for tests
-$DSCResourceName = 'ResourceController'
-Import-Module "$($PSScriptRoot)\..\..\DSCResources\$($DSCResourceName)\$($DSCResourceName).psm1" -Force
-
-#endregion
-
-InModuleScope $DSCResourceName {
-    . "$($PSScriptRoot)\..\HelperFunctions.ps1" -Force
+InModuleScope 'ResourceController' {
+    $DSCResourceName = 'ResourceController'
+    Import-Module "$PSScriptRoot\..\..\DSCResources\$($DSCResourceName)\$($DSCResourceName).psm1" -Force
+    . "$PSScriptRoot\..\HelperFunctions.ps1" -Force
     $DSCResourceName = 'ResourceController'
     Describe "Get-TargetResource" {
         Context "Calling Get-TargetResource on xRegistry" {
