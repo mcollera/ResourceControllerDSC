@@ -1,8 +1,10 @@
 #requires -Version 4.0 -Modules Pester
 
+$DSCResourceName = 'ResourceController'
+Import-Module "$PSScriptRoot\..\..\DSCResources\$($DSCResourceName)\$($DSCResourceName).psm1" -Force
+
 InModuleScope 'ResourceController' {
-    $DSCResourceName = 'ResourceController'
-    Import-Module "$PSScriptRoot\..\..\DSCResources\$($DSCResourceName)\$($DSCResourceName).psm1" -Force
+    
     . "$PSScriptRoot\..\HelperFunctions.ps1" -Force
     $DSCResourceName = 'ResourceController'
     Describe "Get-TargetResource" {
