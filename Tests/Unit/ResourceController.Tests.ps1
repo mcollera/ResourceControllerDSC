@@ -5,8 +5,9 @@ Import-Module "$PSScriptRoot\..\..\DSCResources\$($DSCResourceName)\$($DSCResour
 
 InModuleScope 'ResourceController' {
     
-    . "$PSScriptRoot\..\HelperFunctions.ps1" -Force
+    . "$PSScriptRoot\..\HelperFunctions.ps1"
     $DSCResourceName = 'ResourceController'
+
     Describe "Get-TargetResource" {
         Context "Calling Get-TargetResource on xRegistry" {
             function Get-xRegistry2TargetResource {}
@@ -62,7 +63,7 @@ InModuleScope 'ResourceController' {
                                                 )
                             }
 
-            $TestResult = & "$($DSCResourceName)\Test-TargetResource" @ContextParams
+            $TestResult = & Test-TargetResource @ContextParams
 
             It 'Should call Test-ParameterValidation once' {
                 Assert-MockCalled -CommandName 'Test-ParameterValidation' -ModuleName $DSCResourceName -Times 1 -Scope 'Context'
@@ -93,7 +94,7 @@ InModuleScope 'ResourceController' {
                                                 )
                             }
 
-            $TestResult = & "$($DSCResourceName)\Test-TargetResource" @ContextParams
+            $TestResult = & Test-TargetResource @ContextParams
 
             It 'Should call Test-ParameterValidation once' {
                 Assert-MockCalled -CommandName 'Test-ParameterValidation' -ModuleName $DSCResourceName -Times 1 -Scope 'Context'
@@ -132,7 +133,7 @@ InModuleScope 'ResourceController' {
                                 MaintenanceWindow = $Windows
                             }
 
-            & "$($DSCResourceName)\Set-TargetResource" @ContextParams
+            & Set-TargetResource @ContextParams
 
             It 'Should call Test-ParameterValidation once' {
                 Assert-MockCalled -CommandName 'Test-ParameterValidation' -ModuleName $DSCResourceName -Times 1 -Scope 'Context'
@@ -170,7 +171,7 @@ InModuleScope 'ResourceController' {
                                 MaintenanceWindow = $Windows
                             }
 
-            & "$($DSCResourceName)\Set-TargetResource" @ContextParams
+            & Set-TargetResource @ContextParams
 
             It 'Should not call Test-ParameterValidation once' {
                 Assert-MockCalled -CommandName 'Test-ParameterValidation' -ModuleName $DSCResourceName -Times 0 -Scope 'Context'
@@ -205,7 +206,7 @@ InModuleScope 'ResourceController' {
                             }
 
             $global:DSCMachineStatus = 1
-            & "$($DSCResourceName)\Set-TargetResource" @ContextParams
+            & Set-TargetResource @ContextParams
 
             It 'DSCMachineStatus should equal 0' {
                 $global:DSCMachineStatus | should be 0
