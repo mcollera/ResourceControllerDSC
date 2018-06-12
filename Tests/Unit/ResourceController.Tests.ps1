@@ -190,6 +190,40 @@ InModuleScope 'ResourceController' {
             }
         }
 
+        Context "Calling Set-TargetResource on xRegistry with no maintenace window" {
+            Mock -CommandName Test-ParameterValidation -MockWith {} -Verifiable -ModuleName $DSCResourceName
+            Mock -CommandName Get-ValidParameters -MockWith {@{ValueName = 'Test'; Key = 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey'}} -ModuleName $DSCResourceName -Verifiable
+            Mock -CommandName Set-xRegistry2TargetResource -MockWith {}
+            Mock -CommandName Test-MaintenanceWindow -MockWith {$true} -ModuleName $DSCResourceName
+            
+            $ContextParams = @{
+                                InstanceName = 'Test'
+                                ResourceName = 'xRegistry2'
+                                Properties = @(
+                                                $(New-CimProperty -Key ValueName -Value 'Test'),
+                                                $(New-CimProperty -Key Key -Value 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey')
+                                                )
+                            }
+
+            & Set-TargetResource @ContextParams
+
+            It 'Should call Test-ParameterValidation once' {
+                Assert-MockCalled -CommandName 'Test-ParameterValidation' -ModuleName $DSCResourceName -Times 1 -Scope 'Context'
+            }
+
+            It 'Should call Get-ValidParameters once' {
+                Assert-MockCalled -CommandName 'Get-ValidParameters' -ModuleName $DSCResourceName -Times 1 -Scope 'Context'
+            }
+
+            It 'Should call Set-xRegistryTargetResource once' {
+                Assert-MockCalled -CommandName 'Set-xRegistry2TargetResource' -Times 1 -Scope 'Context'
+            }
+
+            It 'Should not call Test-MaintenanceWindow' {
+                Assert-MockCalled -CommandName 'Test-MaintenanceWindow' -ModuleName $DSCResourceName -Times 0 -Scope 'Context'
+            }
+        }
+
         Context "Suppress Reboot equal True" {
             Mock -CommandName Test-ParameterValidation -MockWith {} -Verifiable -ModuleName $DSCResourceName
             Mock -CommandName Get-ValidParameters -MockWith {@{ValueName = 'Test'; Key = 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey'}} -ModuleName $DSCResourceName -Verifiable
