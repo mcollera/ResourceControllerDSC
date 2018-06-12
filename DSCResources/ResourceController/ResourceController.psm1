@@ -168,6 +168,7 @@ function Set-TargetResource
         $MaintenanceWindow
     )
 
+    $inMaintenanceWindow = $false
     foreach($window in $MaintenanceWindow)
     {
         $maintenanceWindowProperties = @{}
@@ -188,12 +189,17 @@ function Set-TargetResource
             }
         }
 
-        if(-not $(Test-MaintenanceWindow @maintenanceWindowProperties))
+        if($(Test-MaintenanceWindow @maintenanceWindowProperties))
         {
-            Write-Verbose "You are outside the maintenance window. No changes will be made."
-            return
+            $inMaintenanceWindow = $true
         }
     }    
+
+    if(-not $inMaintenanceWindow -and $MaintenanceWindow)
+    {
+        Write-Verbose "You are outside the maintenance window. No changes will be made."
+        return
+    }
 
     $functionName = "Set-TargetResource"
 
