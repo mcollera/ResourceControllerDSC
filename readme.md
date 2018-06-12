@@ -53,6 +53,10 @@ Please check out common DSC Resources [contributing guidelines](
 
 ## Versions
 
+### 1.1
+
+* Fixed bug: Test-MaintenanceWindow would fail if one Maintenance Window of an array of windows was outside the window.
+
 ### 1.0.0.0
 
 * Initial release with the following resources:
