@@ -1,4 +1,4 @@
-﻿[ClassVersion("1.0.0.0"), FriendlyName("ResourceController")]
+[ClassVersion("1.0.0.0"), FriendlyName("ResourceController")]
 class ResourceController : OMI_BaseResource
 {
     [Key] String InstanceName;
