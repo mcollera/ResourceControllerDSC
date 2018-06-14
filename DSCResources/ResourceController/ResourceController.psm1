@@ -1,10 +1,15 @@
-﻿function Get-TargetResource
+﻿# Suppress Global Vars PSSA Error because $global:DSCMachineStatus must be allowed
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidGlobalVars', '')]
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '')]
+param()
+
+function Get-TargetResource
 {
     [CmdletBinding()]
     [OutputType([Hashtable])]
     Param
-    (      
-        [Parameter(Mandatory = $true)]
+    (
+       [Parameter(Mandatory = $true)]
         [string]
         $InstanceName,
 
@@ -13,7 +18,7 @@
         $ResourceName,
 
         [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]] 
+        [Microsoft.Management.Infrastructure.CimInstance[]]
         $Properties,
 
         [Parameter()]
@@ -22,7 +27,11 @@
 
         [Parameter()]
         [Microsoft.Management.Infrastructure.CimInstance[]]
-        $MaintenanceWindow
+        $MaintenanceWindow,
+
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $ResourceVersion
     )
 
     $functionName = "Get-TargetResource"
@@ -33,10 +42,10 @@
         $PropertiesHashTable.Add($prop.Key, $prop.Value)
     }
 
-    $dscResource = Get-DscResource -Name $ResourceName
+    $dscResource = (Get-DscResource -Name $ResourceName).Where({$_.Version -eq $ResourceVersion})[0]
 
     Import-Module $dscResource.Path -Function $functionName -Prefix $ResourceName
-    
+
     try
     {
         Test-ParameterValidation -Name $functionName.Replace("-","-$ResourceName") -Values $PropertiesHashTable
@@ -48,10 +57,10 @@
 
     Write-Verbose "Parameters passed in have validated succesfully."
 
-    $splatProperties = Get-ValidParameters -Name $functionName.Replace("-","-$ResourceName") -Values $PropertiesHashTable
-    
+    $splatProperties = Get-ValidParameter -Name $functionName.Replace("-","-$ResourceName") -Values $PropertiesHashTable
+
     Write-Verbose "Calling Get-TargetResource"
-    
+
     $get = & "Get-${ResourceName}TargetResource" @splatProperties
 
     $CimGetResults = New-Object -TypeName 'System.Collections.ObjectModel.Collection`1[Microsoft.Management.Infrastructure.CimInstance]'
@@ -79,7 +88,7 @@
         SupressReboot = $SupressReboot
         MaintenanceWindow = $MaintenanceWindow
     }
-    
+
     return $returnValue
 }
 
@@ -87,6 +96,7 @@ function Test-TargetResource
 {
     [OutputType([Boolean])]
     [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSDSCUseIdenticalMandatoryParametersForDSC', '')]
     Param
     (
         [Parameter(Mandatory = $true)]
@@ -98,7 +108,7 @@ function Test-TargetResource
         $ResourceName,
 
         [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]] 
+        [Microsoft.Management.Infrastructure.CimInstance[]]
         $Properties,
 
         [Parameter()]
@@ -107,7 +117,11 @@ function Test-TargetResource
 
         [Parameter()]
         [Microsoft.Management.Infrastructure.CimInstance[]]
-        $MaintenanceWindow
+        $MaintenanceWindow,
+
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $ResourceVersion
     )
 
     $functionName = "Test-TargetResource"
@@ -118,10 +132,10 @@ function Test-TargetResource
         $PropertiesHashTable.Add($prop.Key, $prop.Value)
     }
 
-    $dscResource = Get-DscResource -Name $ResourceName
+    $dscResource = (Get-DscResource -Name $ResourceName).Where({$_.Version -eq $ResourceVersion})[0]
 
     Import-Module $dscResource.Path -Function $functionName -Prefix $ResourceName
-    
+
     try
     {
         $null = Test-ParameterValidation -Name $functionName.Replace("-","-$ResourceName") -Values $PropertiesHashTable
@@ -133,12 +147,12 @@ function Test-TargetResource
 
     Write-Verbose "Parameters passed in have validated succesfully."
 
-    $splatProperties = Get-ValidParameters -Name $functionName.Replace("-","-$ResourceName") -Values $PropertiesHashTable
-            
+    $splatProperties = Get-ValidParameter -Name $functionName.Replace("-","-$ResourceName") -Values $PropertiesHashTable
+
     Write-Verbose "Calling Test-TargetResource"
 
     $result = &"Test-${ResourceName}TargetResource" @splatProperties
-    
+
     return $result
 }
 
@@ -156,7 +170,7 @@ function Set-TargetResource
         $ResourceName,
 
         [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]] 
+        [Microsoft.Management.Infrastructure.CimInstance[]]
         $Properties,
 
         [Parameter()]
@@ -165,7 +179,11 @@ function Set-TargetResource
 
         [Parameter()]
         [Microsoft.Management.Infrastructure.CimInstance[]]
-        $MaintenanceWindow
+        $MaintenanceWindow,
+
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $ResourceVersion
     )
 
     $inMaintenanceWindow = $false
@@ -193,7 +211,7 @@ function Set-TargetResource
         {
             $inMaintenanceWindow = $true
         }
-    }    
+    }
 
     if(-not $inMaintenanceWindow -and $MaintenanceWindow)
     {
@@ -208,11 +226,11 @@ function Set-TargetResource
     {
         $PropertiesHashTable.Add($prop.Key, $prop.Value)
     }
-    
-    $dscResource = Get-DscResource -Name $ResourceName
+
+    $dscResource = (Get-DscResource -Name $ResourceName).Where({$_.Version -eq $ResourceVersion})[0]
 
     Import-Module $dscResource.Path -Function $functionName -Prefix $ResourceName
-    
+
     try
     {
         Test-ParameterValidation -Name $functionName.Replace("-","-$ResourceName") -Values $PropertiesHashTable
@@ -223,8 +241,8 @@ function Set-TargetResource
     }
 
     Write-Verbose "Parameters passed in have validated succesfully."
-    
-    $splatProperties = Get-ValidParameters -Name $functionName.Replace("-","-$ResourceName") -Values $PropertiesHashTable
+
+    $splatProperties = Get-ValidParameter -Name $functionName.Replace("-","-$ResourceName") -Values $PropertiesHashTable
 
     Write-Verbose "Calling Set-TargetResource."
 
@@ -253,7 +271,7 @@ function Test-MaintenanceWindow
 
         [Parameter()]
         [string[]]
-        $DaysofWeek,
+        $DaysOfWeek,
 
         [Parameter()]
         [int[]]
@@ -272,80 +290,68 @@ function Test-MaintenanceWindow
         $EndDate
     )
 
-    $Now = Get-Date
+    $now = Get-Date
 
-    if($StartDate -and $EndDate)
+    if($StartDate)
     {
-        if($StartDate -ge $EndDate)
+        if($now.Date -lt $StartDate.Date)
         {
-            throw "StartDate cannot be after the EndDate"
+            return $false
         }
     }
 
-    if(-not $StartDate)
+    if($EndDate)
     {
-        $StartDate = [DateTime]::MinValue
+        if($now.Date -gt $EndDate.Date)
+        {
+            return $false
+        }
     }
 
-    if(-not $EndDate)
+    if($StartTime)
     {
-        $EndDate = [DateTime]::MaxValue
+        if($now.TimeOfDay -lt $StartTime.TimeOfDay)
+        {
+            return $false
+        }
     }
 
-    $StartDate = Get-Date -Date $StartDate -Hour 0 -Minute 0 -Second 0 -Millisecond 0
-    $EndDate = Get-Date -Date $EndDate -Hour 23 -Minute 59 -Second 59 -Millisecond 999
-
-    if($Now -lt $StartDate -or $Now -gt $EndDate)
+    if($EndTime)
     {
-        return $false
-    }
-
-    if(-not $EndTime)
-    {
-        $EndTime = Get-Date -Date $Now -Hour 23 -Minute 59 -Second 59 -Millisecond 999
-    }
-    else
-    {
-        $EndTime = Get-Date -Date $Now -Hour $EndTime.Hour -Minute $EndTime.Minute -Second $EndTime.Second -Millisecond $EndTime.Millisecond
-    }
-
-    if(-not $StartTime)
-    {
-        $StartTime = Get-Date -Date $Now -Hour 0 -Minute 0 -Second 0 -Millisecond 0
-    }
-    else
-    {
-        $StartTime = Get-Date -Date $Now -Hour $StartTime.Hour -Minute $StartTime.Minute -Second $StartTime.Second -Millisecond $StartTime.Millisecond
+        if($now.TimeOfDay -gt $EndTime.TimeOfDay)
+        {
+            return $false
+        }
     }
 
     switch ($Frequency)
     {
         'Daily' {
 
-            if(-not $DaysofWeek)
+            if(-not $DaysOfWeek)
             {
                 throw "Error"
             }
 
-            if(-not ($DaysofWeek -Contains $now.DayOfWeek))
+            if(-not ($DaysOfWeek -Contains $now.DayOfWeek))
             {
                 return $false
             }
         }
         'Weekly' {
-            
-            if(-not $DaysofWeek -or -not $Week)
+
+            if(-not $DaysOfWeek -or -not $Week)
             {
                 throw "Error"
             }
 
-            if(-not ($DaysofWeek -Contains $now.DayOfWeek))
+            if(-not ($DaysOfWeek -Contains $now.DayOfWeek))
             {
                 return $false
             }
 
             $dow = $now.DayOfWeek
-            $WorkingDate = Get-Date -Year $Now.Year -Month $Now.Month -Day 1
+            $WorkingDate = Get-Date -Year $now.Year -Month $now.Month -Day 1
             $weekCount = 0
 
             for($i = 1; $i -le $now.Day; $i++)
@@ -362,7 +368,7 @@ function Test-MaintenanceWindow
                 #check if last day
                 if($Week -contains 0)
                 {
-                    $WorkingDate = Get-Date -Year $Now.Year -Month $Now.Month -Day $([DateTime]::DaysInMonth($Now.Year,$Now.Month))
+                    $WorkingDate = Get-Date -Year $now.Year -Month $now.Month -Day $([DateTime]::DaysInMonth($now.Year,$now.Month))
                     while($dow -ne $WorkingDate.DayOfWeek)
                     {
                         $WorkingDate = $WorkingDate.AddDays(-1)
@@ -384,12 +390,12 @@ function Test-MaintenanceWindow
             {
                 throw "error"
             }
-            if(-not ($Days -contains $Now.Day))
+            if(-not ($Days -contains $now.Day))
             {
                 if($Days -contains 0)
                 {
-                    $lastDayofMonth = $([DateTime]::DaysInMonth($Now.Year,$Now.Month))
-                    if($lastDayofMonth -ne $Now.Day)
+                    $lastDayofMonth = $([DateTime]::DaysInMonth($now.Year,$now.Month))
+                    if($lastDayofMonth -ne $now.Day)
                     {
                         return $false
                     }
@@ -400,11 +406,6 @@ function Test-MaintenanceWindow
                 }
             }
         }
-    }
-
-    if($Now -lt $StartTime -or $now -gt $EndTime)
-    {
-        return $false
     }
 
     return $true
@@ -426,7 +427,7 @@ function Assert-Validation
     foreach($attribute in $ParameterMetadata.Attributes)
     {
         try
-        {  
+        {
             $Method = $attribute.GetType().GetMethod('ValidateElement',$BindingFlags)
             if($Method)
             {
@@ -490,7 +491,7 @@ function Test-ParameterValidation
     }
 }
 
-function Get-ValidParameters
+function Get-ValidParameter
 {
     param(
 
