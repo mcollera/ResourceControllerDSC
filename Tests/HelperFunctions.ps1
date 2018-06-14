@@ -1,3 +1,6 @@
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '')]
+param()
+
 function New-CIMProperty
 {
     param
@@ -5,10 +8,10 @@ function New-CIMProperty
         [parameter(Mandatory = $true)]
         [string]
         $Key,
-        
+
         [parameter(Mandatory = $true)]
         [string]
-        $Value    
+        $Value
     )
     $CimProperties = @{
         Namespace = 'root/Microsoft/Windows/DesiredStateConfiguration'
@@ -57,7 +60,7 @@ function New-CIMWindow
         $EndDate
     )
     $maintenanceWindowProperties = @{}
-    
+
     foreach($param in $PSBoundParameters.Keys)
     {
         $maintenanceWindowProperties.Add($param, $PSBoundParameters.$param)
