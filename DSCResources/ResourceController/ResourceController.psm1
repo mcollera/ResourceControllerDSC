@@ -96,7 +96,6 @@ function Test-TargetResource
 {
     [OutputType([Boolean])]
     [CmdletBinding()]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSDSCUseIdenticalMandatoryParametersForDSC', '')]
     Param
     (
         [Parameter(Mandatory = $true)]
