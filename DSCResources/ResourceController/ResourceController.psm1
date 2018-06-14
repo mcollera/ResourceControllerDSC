@@ -219,6 +219,12 @@ function Set-TargetResource
         return
     }
 
+    if(-not $inMaintenanceWindow -and $MaintenanceWindow)
+    {
+        Write-Verbose "You are outside the maintenance window. No changes will be made."
+        return
+    }
+
     $functionName = "Set-TargetResource"
 
     $PropertiesHashTable = @{}
