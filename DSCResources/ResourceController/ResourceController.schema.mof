@@ -7,7 +7,7 @@ class ResourceController : OMI_BaseResource
     [Read, EmbeddedInstance("MSFT_KeyValuePair"), Description("")] String Result[];
     [Write] Boolean SupressReboot;
     [Write, EmbeddedInstance("MaintenanceWindow")] string MaintenanceWindow[];
-    [Write] String ResourceVersion;
+    [Required] String ResourceVersion;
 };
 
 [ClassVersion("1.0.0.0")]
@@ -16,9 +16,9 @@ class MaintenanceWindow
     [Write] String Frequency;
     [Write] DateTime StartTime;
     [Write] DateTime EndTime;
-    [Write,ValueMap{"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"},Values{"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"}] String DaysOfWeek[];
+    [Write,ValueMap{"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"},Values{"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"}] String DayOfWeek[];
     [Write,ValueMap{"0","1","2","3","4"},Values{"0","1","2","3","4"}] uint32 Week[];
-    [Write,ValueMap{"0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31"},Values{"0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31"}] uint32 Days[];
+    [Write,ValueMap{"0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31"},Values{"0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31"}] uint32 Day[];
     [Write] DateTime StartDate;
     [Write] DateTime EndDate;
 };

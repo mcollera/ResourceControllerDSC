@@ -192,9 +192,9 @@ function Set-TargetResource
         $params = @("Frequency",
                     "StartTime",
                     "EndTime",
-                    "DaysofWeek",
+                    "DayOfWeek",
                     "Week",
-                    "Days",
+                    "Day",
                     "StartDate",
                     "EndDate")
 
@@ -276,7 +276,7 @@ function Test-MaintenanceWindow
 
         [Parameter()]
         [string[]]
-        $DaysOfWeek,
+        $DayOfWeek,
 
         [Parameter()]
         [int[]]
@@ -284,7 +284,7 @@ function Test-MaintenanceWindow
 
         [Parameter()]
         [int[]]
-        $Days,
+        $Day,
 
         [Parameter()]
         [Nullable[DateTime]]
@@ -333,24 +333,24 @@ function Test-MaintenanceWindow
     {
         'Daily' {
 
-            if(-not $DaysOfWeek)
+            if(-not $DayOfWeek)
             {
                 throw "Error"
             }
 
-            if(-not ($DaysOfWeek -Contains $now.DayOfWeek))
+            if(-not ($DayOfWeek -Contains $now.DayOfWeek))
             {
                 return $false
             }
         }
         'Weekly' {
 
-            if(-not $DaysOfWeek -or -not $Week)
+            if(-not $DayOfWeek -or -not $Week)
             {
                 throw "Error"
             }
 
-            if(-not ($DaysOfWeek -Contains $now.DayOfWeek))
+            if(-not ($DayOfWeek -Contains $now.DayOfWeek))
             {
                 return $false
             }
@@ -391,13 +391,13 @@ function Test-MaintenanceWindow
         }
         'Monthly' {
 
-            if(-not $Days)
+            if(-not $Day)
             {
                 throw "error"
             }
-            if(-not ($Days -contains $now.Day))
+            if(-not ($Day -contains $now.Day))
             {
-                if($Days -contains 0)
+                if($Day -contains 0)
                 {
                     $lastDayofMonth = $([DateTime]::DaysInMonth($now.Year,$now.Month))
                     if($lastDayofMonth -ne $now.Day)

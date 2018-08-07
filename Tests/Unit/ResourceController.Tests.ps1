@@ -264,7 +264,7 @@ InModuleScope 'ResourceController' {
             Mock Get-Date {return [DateTime]::new("2018","01","02")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
                                 Frequency = 'Daily'
-                                DaysofWeek = 'Monday'
+                                DayofWeek = 'Monday'
                             }
 
             $Window = & "Test-MaintenanceWindow" @ContextParams
@@ -278,7 +278,7 @@ InModuleScope 'ResourceController' {
             Mock Get-Date {return [DateTime]::new("2018","01","01","11","31","0")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
                                 Frequency = 'Daily'
-                                DaysofWeek = 'Monday'
+                                DayofWeek = 'Monday'
                                 StartTime = "11:00am"
                                 EndTime = "11:30am"
                             }
@@ -294,7 +294,7 @@ InModuleScope 'ResourceController' {
             Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
                                 Frequency = 'Weekly'
-                                DaysofWeek = 'Monday'
+                                DayofWeek = 'Monday'
                                 Week = @(2,3)
                             }
 
@@ -309,7 +309,7 @@ InModuleScope 'ResourceController' {
             Mock Get-Date {return [DateTime]::new("2018","01","01","11","31","0")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
                                 Frequency = 'Weekly'
-                                DaysofWeek = 'Monday'
+                                DayofWeek = 'Monday'
                                 StartTime = "11:00am"
                                 EndTime = "11:30am"
                                 Week = @(1)
@@ -326,7 +326,7 @@ InModuleScope 'ResourceController' {
             Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
                                 Frequency = 'Monthly'
-                                Days = @(2,3,4)
+                                Day = @(2,3,4)
                             }
 
             $Window = & "Test-MaintenanceWindow" @ContextParams
@@ -340,7 +340,7 @@ InModuleScope 'ResourceController' {
             Mock Get-Date {return [DateTime]::new("2018","01","01","11","31","0")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
                                 Frequency = 'Monthly'
-                                Days = 1
+                                Day = 1
                                 StartTime = "11:00am"
                                 EndTime = "11:30am"
                             }
@@ -356,7 +356,7 @@ InModuleScope 'ResourceController' {
             Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
                                 Frequency = 'Daily'
-                                DaysofWeek = 'Monday'
+                                DayofWeek = 'Monday'
                             }
 
             $Window = & "Test-MaintenanceWindow" @ContextParams
@@ -370,7 +370,7 @@ InModuleScope 'ResourceController' {
             Mock Get-Date {return [DateTime]::new("2018","01","01","11","25","0")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
                                 Frequency = 'Daily'
-                                DaysofWeek = 'Monday'
+                                DayofWeek = 'Monday'
                                 StartTime = "11:00am"
                                 EndTime = "11:30am"
                             }
@@ -386,7 +386,7 @@ InModuleScope 'ResourceController' {
             Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
                                 Frequency = 'Weekly'
-                                DaysofWeek = 'Monday'
+                                DayofWeek = 'Monday'
                                 Week = @(1,2,3)
                             }
 
@@ -401,7 +401,7 @@ InModuleScope 'ResourceController' {
             Mock Get-Date {return [DateTime]::new("2018","01","01","11","27","0")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
                                 Frequency = 'Weekly'
-                                DaysofWeek = 'Monday'
+                                DayofWeek = 'Monday'
                                 StartTime = "11:00am"
                                 EndTime = "11:30am"
                                 Week = @(1)
@@ -418,7 +418,7 @@ InModuleScope 'ResourceController' {
             Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
                                 Frequency = 'Monthly'
-                                Days = @(1,3,4)
+                                Day = @(1,3,4)
                             }
 
             $Window = & "Test-MaintenanceWindow" @ContextParams
@@ -432,7 +432,7 @@ InModuleScope 'ResourceController' {
             Mock Get-Date {return [DateTime]::new("2018","01","01","11","28","0")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
                                 Frequency = 'Monthly'
-                                Days = 1
+                                Day = 1
                                 StartTime = "11:00am"
                                 EndTime = "11:30am"
                             }
@@ -448,7 +448,7 @@ InModuleScope 'ResourceController' {
             Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
                                 Frequency = 'Monthly'
-                                Days = 1
+                                Day = 1
                                 StartDate = "02-01-2018"
                             }
 
@@ -463,7 +463,7 @@ InModuleScope 'ResourceController' {
             Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
                                 Frequency = 'Monthly'
-                                Days = 1
+                                Day = 1
                                 EndDate = "12-31-2017"
                             }
 
@@ -478,7 +478,7 @@ InModuleScope 'ResourceController' {
             Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
                                 Frequency = 'Monthly'
-                                Days = 1
+                                Day = 1
                                 StartDate = "12-31-2017"
                             }
 
@@ -493,7 +493,7 @@ InModuleScope 'ResourceController' {
             Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
                                 Frequency = 'Monthly'
-                                Days = 1
+                                Day = 1
                                 EndDate = "01-31-2018"
                             }
 
@@ -508,7 +508,7 @@ InModuleScope 'ResourceController' {
             Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
                                 Frequency = 'Monthly'
-                                Days = 1
+                                Day = 1
                                 EndDate = "01-31-2018"
                                 StartDate = "12-31-2017"
                             }
@@ -524,7 +524,7 @@ InModuleScope 'ResourceController' {
             Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
                                 Frequency = 'Monthly'
-                                Days = 1
+                                Day = 1
                                 EndDate = "01-31-2018"
                                 StartDate = "01-15-2018"
                             }

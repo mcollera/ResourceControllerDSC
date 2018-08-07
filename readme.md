@@ -53,7 +53,10 @@ Please check out common DSC Resources [contributing guidelines](
 
 ## Versions
 
-## 1.2
+### 1.3
+  Breaking Change: Fixed variable names in DSCResource
+
+### 1.2
   Breaking Change: Add ResourceVersion to support systems with multiple versions installed.
 
 ### 1.1
