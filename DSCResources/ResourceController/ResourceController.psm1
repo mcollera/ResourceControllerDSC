@@ -36,13 +36,14 @@ function Get-TargetResource
 
     $functionName = "Get-TargetResource"
 
+    $dscResource = (Get-DscResource -Name $ResourceName).Where({$_.Version -eq $ResourceVersion})[0]
+
     $PropertiesHashTable = @{}
     foreach($prop in $Properties)
     {
-        $PropertiesHashTable.Add($prop.Key, $prop.Value)
+        $propertyType = $dscResource.Properties.Where({$_.Name -ieq $prop.Key}).PropertyType
+        $PropertiesHashTable.Add($prop.Key, $(Get-ConvertedValue -ObjectType $propertyType -Value $prop.Value))
     }
-
-    $dscResource = (Get-DscResource -Name $ResourceName).Where({$_.Version -eq $ResourceVersion})[0]
 
     Import-Module $dscResource.Path -Function $functionName -Prefix $ResourceName
 
@@ -125,13 +126,15 @@ function Test-TargetResource
 
     $functionName = "Test-TargetResource"
 
+    $dscResource = (Get-DscResource -Name $ResourceName).Where({$_.Version -eq $ResourceVersion})[0]
+
     $PropertiesHashTable = @{}
     foreach($prop in $Properties)
     {
-        $PropertiesHashTable.Add($prop.Key, $prop.Value)
+        $propertyType = $dscResource.Properties.Where({$_.Name -ieq $prop.Key}).PropertyType
+        $PropertiesHashTable.Add($prop.Key, $(Get-ConvertedValue -ObjectType $propertyType -Value $prop.Value))
     }
 
-    $dscResource = (Get-DscResource -Name $ResourceName).Where({$_.Version -eq $ResourceVersion})[0]
 
     Import-Module $dscResource.Path -Function $functionName -Prefix $ResourceName
 
@@ -224,15 +227,16 @@ function Set-TargetResource
         return
     }
 
-    $functionName = "Set-TargetResource"
+    $functionName = "Set-TargetResource"    
+
+    $dscResource = (Get-DscResource -Name $ResourceName).Where({$_.Version -eq $ResourceVersion})[0]
 
     $PropertiesHashTable = @{}
     foreach($prop in $Properties)
     {
-        $PropertiesHashTable.Add($prop.Key, $prop.Value)
+        $propertyType = $dscResource.Properties.Where({$_.Name -ieq $prop.Key}).PropertyType
+        $PropertiesHashTable.Add($prop.Key, $(Get-ConvertedValue -ObjectType $propertyType -Value $prop.Value))
     }
-
-    $dscResource = (Get-DscResource -Name $ResourceName).Where({$_.Version -eq $ResourceVersion})[0]
 
     Import-Module $dscResource.Path -Function $functionName -Prefix $ResourceName
 
@@ -524,6 +528,44 @@ function Get-ValidParameter
         }
     }
     return $properties
+}
+
+function Get-ConvertedValue
+{
+    param(
+
+        [Parameter(Mandatory = $true)]
+        [string]
+        $ObjectType,
+
+        [Parameter(Mandatory = $true)]
+        $Value
+    )
+
+    Switch ($ObjectType)
+    {
+        "[string]" { $assemblyName = [string].UnderlyingSystemType.AssemblyQualifiedName }
+        "[string[]]" { $assemblyName = [string[]].UnderlyingSystemType.AssemblyQualifiedName }
+        "[bool]" { $assemblyName = [bool].UnderlyingSystemType.AssemblyQualifiedName }
+        "[PSCredential]" { $assemblyName = [PSCredential].UnderlyingSystemType.AssemblyQualifiedName }
+        "[UInt32[]]" { $assemblyName = [UInt32[]].UnderlyingSystemType.AssemblyQualifiedName }        
+        "[UInt32]" { $assemblyName = [UInt32].UnderlyingSystemType.AssemblyQualifiedName }       
+        "[DateTime]" { $assemblyName = [DateTime].UnderlyingSystemType.AssemblyQualifiedName }   
+        "[Int64]" { $assemblyName = [Int64].UnderlyingSystemType.AssemblyQualifiedName }   
+        "[UInt64]" { $assemblyName = [UInt64].UnderlyingSystemType.AssemblyQualifiedName }   
+        "[double]" { $assemblyName = [double].UnderlyingSystemType.AssemblyQualifiedName }   
+        "[UInt16]" { $assemblyName = [UInt16].UnderlyingSystemType.AssemblyQualifiedName }   
+        "[String[]]" { $assemblyName = [String[]].UnderlyingSystemType.AssemblyQualifiedName }   
+        "[String]" { $assemblyName = [String].UnderlyingSystemType.AssemblyQualifiedName }   
+        "[Boolean]" { $assemblyName = [Boolean].UnderlyingSystemType.AssemblyQualifiedName }   
+        "[HashTable]" { $assemblyName = [HashTable].UnderlyingSystemType.AssemblyQualifiedName }   
+        "[Int32]" { $assemblyName = [Int32].UnderlyingSystemType.AssemblyQualifiedName }   
+        "[Int16]" { $assemblyName = [Int16].UnderlyingSystemType.AssemblyQualifiedName }
+
+    }
+
+    $converter = [System.ComponentModel.TypeDescriptor]::GetConverter([System.Type]::GetType($assemblyName))
+    return $converter.ConvertFromInvariantString($Value)
 }
 
 Export-ModuleMember -Function *-TargetResource

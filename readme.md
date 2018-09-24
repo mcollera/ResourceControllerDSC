@@ -53,6 +53,9 @@ Please check out common DSC Resources [contributing guidelines](
 
 ## Versions
 
+### 1.3.1
+  Converted resource parameters to there desired type.
+
 ### 1.3
   Breaking Change: Fixed variable names in DSCResource
 
