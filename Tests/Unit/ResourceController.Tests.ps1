@@ -7,6 +7,8 @@ param()
 $DSCResourceName = 'ResourceController'
 Import-Module "$PSScriptRoot\..\..\DSCResources\$($DSCResourceName)\$($DSCResourceName).psm1" -Force
 
+
+
 InModuleScope 'ResourceController' {
 
     . "$PSScriptRoot\..\HelperFunctions.ps1"
@@ -17,29 +19,31 @@ InModuleScope 'ResourceController' {
             function Get-xRegistry2TargetResource {}
             $ResourceName = 'xRegistry2'
             Mock -CommandName Import-Module -MockWith {} -ModuleName $DSCResourceName
+            Mock -CommandName Remove-Module -MockWith {} -ModuleName $DSCResourceName
             Mock -CommandName Get-DSCResource -MockWith { 
                 @{
-                    Path = 'FilePath'
-                    Version = '1.0'
-                    Properties = @(
+                    Path         = 'FilePath'
+                    Version      = '1.0'
+                    ResourceType = 'XRegistry2'
+                    Properties   = @(
                         @{
-                            Name = 'ValueName'
+                            Name         = 'ValueName'
                             PropertyType = '[String]'
                         },  
                         @{
-                            Name = 'Key'
+                            Name         = 'Key'
                             PropertyType = '[String]'
                         },  
                         @{
-                            Name = 'Ensure'
+                            Name         = 'Ensure'
                             PropertyType = '[String]'
                         },  
                         @{
-                            Name = 'ValueData'
+                            Name         = 'ValueData'
                             PropertyType = '[String]'
                         },  
                         @{
-                            Name = 'ValueType'
+                            Name         = 'ValueType'
                             PropertyType = '[String]'
                         }               
                     )
@@ -49,17 +53,17 @@ InModuleScope 'ResourceController' {
             Mock -CommandName Get-ValidParameter -MockWith {@{ValueName = 'Test2'; Key = 'HKEY_LOCAL_MACHINE\SOFTWARE\test'; ValueData = 'Test String'; ValueType = 'String'}} -ModuleName $DSCResourceName -Verifiable
             Mock -CommandName Get-xRegistry2TargetResource -MockWith {return @{Test = 'Test'}}
             $ContextParams = @{
-                                InstanceName = 'Test'
-                                ResourceName = $ResourceName
-                                ResourceVersion = '1.0'
-                                Properties = @(
-                                                $(New-CimProperty -Key ValueName -Value 'Test2'),
-                                                $(New-CimProperty -Key Key -Value 'HKEY_LOCAL_MACHINE\SOFTWARE\test'),
-                                                $(New-CimProperty -Key Ensure -Value 'Present'),
-                                                $(New-CimProperty -Key ValueData -Value 'Test String'),
-                                                $(New-CimProperty -Key ValueType -Value 'String')
-                                                )
-                            }
+                InstanceName    = 'Test'
+                ResourceName    = $ResourceName
+                ResourceVersion = '1.0'
+                Properties      = "@{
+                                                    ValueName = 'Test2'
+                                                    Key       = 'HKEY_LOCAL_MACHINE\SOFTWARE\test'
+                                                    Ensure    = 'Present'
+                                                    ValueData = 'Test String'
+                                                    ValueType = 'String'
+                                                }"
+            }
 
             $GetResult = & Get-TargetResource @ContextParams
 
@@ -76,52 +80,105 @@ InModuleScope 'ResourceController' {
             }
         }
 
+        Context "Calling Get-TargetResource on xRegistry with missing params" {
+            function Get-xRegistry2TargetResource {}
+            $ResourceName = 'xRegistry2'
+            Mock -CommandName Import-Module -MockWith {} -ModuleName $DSCResourceName
+            Mock -CommandName Remove-Module -MockWith {} -ModuleName $DSCResourceName
+            Mock -CommandName Get-DSCResource -MockWith { 
+                @{
+                    Path         = 'FilePath'
+                    Version      = '1.0'
+                    ResourceType = 'XRegistry2'
+                    Properties   = @(
+                        @{
+                            Name         = 'ValueName'
+                            PropertyType = '[String]'
+                        },  
+                        @{
+                            Name         = 'Key'
+                            PropertyType = '[String]'
+                        },  
+                        @{
+                            Name         = 'Ensure'
+                            PropertyType = '[String]'
+                        },  
+                        @{
+                            Name         = 'ValueData'
+                            PropertyType = '[String]'
+                        },  
+                        @{
+                            Name         = 'ValueType'
+                            PropertyType = '[String]'
+                        }               
+                    )
+                } 
+            } -ModuleName $DSCResourceName
+            Mock -CommandName Test-ParameterValidation -MockWith {throw 'Missing Mandatory parameter'} -Verifiable -ModuleName $DSCResourceName
+            Mock -CommandName Get-ValidParameter -MockWith {@{ValueName = 'Test2'; Key = 'HKEY_LOCAL_MACHINE\SOFTWARE\test'; ValueData = 'Test String'; ValueType = 'String'}} -ModuleName $DSCResourceName -Verifiable
+            Mock -CommandName Get-xRegistry2TargetResource -MockWith {return @{Test = 'Test'}}
+            $ContextParams = @{
+                InstanceName    = 'Test'
+                ResourceName    = $ResourceName
+                ResourceVersion = '1.0'
+                Properties      = "@{
+                                                    ValueName = 'Test2'
+                                                }"
+            }
+
+            It 'Should throw' {
+                { & Get-TargetResource @ContextParams } | Should -Throw
+            }
+        }
     }
 
     Describe "Test-TargetResource" {
         function Test-xRegistry2TargetResource {}
         Mock -CommandName Import-Module -MockWith {} -ModuleName $DSCResourceName
+        Mock -CommandName Remove-Module -MockWith {} -ModuleName $DSCResourceName
         Mock -CommandName Get-DSCResource -MockWith { 
             @{
-                Path = 'FilePath'
-                Version = '1.0'
-                Properties = @(
+                Path         = 'FilePath'
+                Version      = '1.0'
+                ResourceType = 'XRegistry2'
+                Properties   = @(
                     @{
-                        Name = 'ValueName'
+                        Name         = 'ValueName'
                         PropertyType = '[String]'
                     },  
                     @{
-                        Name = 'Key'
+                        Name         = 'Key'
                         PropertyType = '[String]'
                     },  
                     @{
-                        Name = 'Ensure'
+                        Name         = 'Ensure'
                         PropertyType = '[String]'
                     },  
                     @{
-                        Name = 'ValueData'
+                        Name         = 'ValueData'
                         PropertyType = '[String]'
                     },  
                     @{
-                        Name = 'ValueType'
+                        Name         = 'ValueType'
                         PropertyType = '[String]'
                     }               
                 )
             } 
         } -ModuleName $DSCResourceName
+
         Context "Calling Test-TargetResource on xRegistry where Key does not exist" {
             Mock -CommandName Test-ParameterValidation -MockWith {} -Verifiable -ModuleName $DSCResourceName
             Mock -CommandName Get-ValidParameter -MockWith {@{ValueName = 'Test'; Key = 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey'}} -ModuleName $DSCResourceName -Verifiable
             Mock -CommandName Test-xRegistry2TargetResource -MockWith {return $false}
             $ContextParams = @{
-                                InstanceName = 'Test'
-                                ResourceName = 'xRegistry2'
-                                ResourceVersion = '1.0'
-                                Properties = @(
-                                                $(New-CimProperty -Key ValueName -Value 'Test'),
-                                                $(New-CimProperty -Key Key -Value 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey')
-                                                )
-                            }
+                InstanceName    = 'Test'
+                ResourceName    = 'xRegistry2'
+                ResourceVersion = '1.0'
+                Properties      = "@{
+                                                    ValueName = 'Test'
+                                                    Key       = 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey'
+                                                }"
+            }
 
             $TestResult = & Test-TargetResource @ContextParams
 
@@ -138,22 +195,22 @@ InModuleScope 'ResourceController' {
             }
         }
 
-            Context "Calling Test-TargetResource on xRegistry where Key does exist" {
+        Context "Calling Test-TargetResource on xRegistry where Key does exist" {
             $ComputerName = Get-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName -Name ComputerName
             Mock -CommandName Test-ParameterValidation -MockWith {} -Verifiable -ModuleName $DSCResourceName
             Mock -CommandName Get-ValidParameter -MockWith {@{ValueType = 'String'; ValueData = "ComputerName"; ValueName = 'ComputerName'; Key = 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName'}} -ModuleName $DSCResourceName -Verifiable
             Mock -CommandName Test-xRegistry2TargetResource -MockWith {return $true}
             $ContextParams = @{
-                                InstanceName = 'Test'
-                                ResourceName = 'xRegistry2'
-                                ResourceVersion = '1.0'
-                                Properties = @(
-                                                $(New-CimProperty -Key ValueName -Value 'ComputerName'),
-                                                $(New-CimProperty -Key Key -Value 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName'),
-                                                $(New-CIMProperty -Key ValueData -Value $ComputerName.ComputerName),
-                                                $(New-CIMProperty -Key ValueType -Value 'String')
-                                                )
-                            }
+                InstanceName    = 'Test'
+                ResourceName    = 'xRegistry2'
+                ResourceVersion = '1.0'
+                Properties      = "@{
+                                                    ValueName = 'ComputerName'
+                                                    Key       = 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName'
+                                                    ValueData = '$($ComputerName.ComputerName)'
+                                                    ValueType = 'String'
+                                                }"
+            }
 
             $TestResult = & Test-TargetResource @ContextParams
 
@@ -169,34 +226,55 @@ InModuleScope 'ResourceController' {
                 $TestResult | Should Be $true
             }
         }
+
+        
+        Context "Calling Test-TargetResource on xRegistry missing mandatory params" {
+            Mock -CommandName Test-ParameterValidation -MockWith {throw 'Missing Params'} -Verifiable -ModuleName $DSCResourceName
+            Mock -CommandName Get-ValidParameter -MockWith {@{ValueType = 'String'; ValueData = "ComputerName"; ValueName = 'ComputerName'; Key = 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName'}} -ModuleName $DSCResourceName -Verifiable
+            Mock -CommandName Test-xRegistry2TargetResource -MockWith {return $true}
+            $ContextParams = @{
+                InstanceName    = 'Test'
+                ResourceName    = 'xRegistry2'
+                ResourceVersion = '1.0'
+                Properties      = "@{
+                                                    ValueName = 'ComputerName'
+                                                }"
+            }
+
+            It 'Should throw' {
+                { & Test-TargetResource @ContextParams } | Should -Throw
+            }
+        }
     }
 
     Describe "Set-TargetResource" {
         function Set-xRegistry2TargetResource {}
         Mock -CommandName Import-Module -MockWith {} -ModuleName $DSCResourceName
+        Mock -CommandName Remove-Module -MockWith {} -ModuleName $DSCResourceName
         Mock -CommandName Get-DSCResource -MockWith { 
             @{
-                Path = 'FilePath'
-                Version = '1.0'
-                Properties = @(
+                Path         = 'FilePath'
+                Version      = '1.0'
+                ResourceType = 'XRegistry2'
+                Properties   = @(
                     @{
-                        Name = 'ValueName'
+                        Name         = 'ValueName'
                         PropertyType = '[String]'
                     },  
                     @{
-                        Name = 'Key'
+                        Name         = 'Key'
                         PropertyType = '[String]'
                     },  
                     @{
-                        Name = 'Ensure'
+                        Name         = 'Ensure'
                         PropertyType = '[String]'
                     },  
                     @{
-                        Name = 'ValueData'
+                        Name         = 'ValueData'
                         PropertyType = '[String]'
                     },  
                     @{
-                        Name = 'ValueType'
+                        Name         = 'ValueType'
                         PropertyType = '[String]'
                     }               
                 )
@@ -212,15 +290,15 @@ InModuleScope 'ResourceController' {
                 New-CIMWindow -Frequency 'Daily'
             )
             $ContextParams = @{
-                                InstanceName = 'Test'
-                                ResourceName = 'xRegistry2'
-                                ResourceVersion = '1.0'
-                                Properties = @(
-                                                $(New-CimProperty -Key ValueName -Value 'Test'),
-                                                $(New-CimProperty -Key Key -Value 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey')
-                                                )
-                                MaintenanceWindow = $Windows
-                            }
+                InstanceName      = 'Test'
+                ResourceName      = 'xRegistry2'
+                ResourceVersion   = '1.0'
+                Properties        = "@{
+                                                    ValueName = 'Test'
+                                                    Key       = 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey'
+                                                }"
+                MaintenanceWindow = $Windows
+            }
 
             & Set-TargetResource @ContextParams
 
@@ -251,15 +329,15 @@ InModuleScope 'ResourceController' {
                 New-CIMWindow -Frequency 'Daily'
             )
             $ContextParams = @{
-                                InstanceName = 'Test'
-                                ResourceName = 'xRegistry2'
-                                ResourceVersion = '1.0'
-                                Properties = @(
-                                                $(New-CimProperty -Key ValueName -Value 'Test'),
-                                                $(New-CimProperty -Key Key -Value 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey')
-                                                )
-                                MaintenanceWindow = $Windows
-                            }
+                InstanceName      = 'Test'
+                ResourceName      = 'xRegistry2'
+                ResourceVersion   = '1.0'
+                Properties        = "@{
+                                                    ValueName = 'Test'
+                                                    Key       = 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey'
+                                                }"
+                MaintenanceWindow = $Windows
+            }
 
             & Set-TargetResource @ContextParams
 
@@ -287,14 +365,14 @@ InModuleScope 'ResourceController' {
             Mock -CommandName Test-MaintenanceWindow -MockWith {$true} -ModuleName $DSCResourceName
 
             $ContextParams = @{
-                                InstanceName = 'Test'
-                                ResourceName = 'xRegistry2'
-                                ResourceVersion = '1.0'
-                                Properties = @(
-                                                $(New-CimProperty -Key ValueName -Value 'Test'),
-                                                $(New-CimProperty -Key Key -Value 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey')
-                                                )
-                            }
+                InstanceName    = 'Test'
+                ResourceName    = 'xRegistry2'
+                ResourceVersion = '1.0'
+                Properties      = "@{
+                                                    ValueName = 'Test'
+                                                    Key       = 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey'
+                                                }"
+            }
 
             & Set-TargetResource @ContextParams
 
@@ -315,21 +393,41 @@ InModuleScope 'ResourceController' {
             }
         }
 
+        Context "Calling Set-TargetResource on xRegistry with missing parameters" {
+            Mock -CommandName Test-ParameterValidation -MockWith {throw 'Missing Params'} -Verifiable -ModuleName $DSCResourceName
+            Mock -CommandName Get-ValidParameter -MockWith {@{ValueName = 'Test'; Key = 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey'}} -ModuleName $DSCResourceName -Verifiable
+            Mock -CommandName Set-xRegistry2TargetResource -MockWith {}
+            Mock -CommandName Test-MaintenanceWindow -MockWith {$true} -ModuleName $DSCResourceName
+
+            $ContextParams = @{
+                InstanceName    = 'Test'
+                ResourceName    = 'xRegistry2'
+                ResourceVersion = '1.0'
+                Properties      = "@{
+                                                    ValueName = 'Test'
+                                                }"
+            }
+
+            It 'Should throw' {
+                { & Set-TargetResource @ContextParams } | Should -Throw
+            }
+        }
+
         Context "Suppress Reboot equal True" {
             Mock -CommandName Test-ParameterValidation -MockWith {} -Verifiable -ModuleName $DSCResourceName
             Mock -CommandName Get-ValidParameter -MockWith {@{ValueName = 'Test'; Key = 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey'}} -ModuleName $DSCResourceName -Verifiable
             Mock -CommandName Set-xRegistry2TargetResource -MockWith {}
             Mock -CommandName Test-MaintenanceWindow -MockWith {$true} -ModuleName $DSCResourceName
             $ContextParams = @{
-                                InstanceName = 'Test'
-                                ResourceName = 'xRegistry2'
-                                ResourceVersion = '1.0'
-                                SupressReboot = $true
-                                Properties = @(
-                                                $(New-CimProperty -Key ValueName -Value 'Test'),
-                                                $(New-CimProperty -Key Key -Value 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey')
-                                                )
-                            }
+                InstanceName    = 'Test'
+                ResourceName    = 'xRegistry2'
+                ResourceVersion = '1.0'
+                SuppressReboot  = $true
+                Properties      = "@{
+                                                    ValueName = 'Test'
+                                                    Key       = 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey'
+                                                }"
+            }
 
             $global:DSCMachineStatus = 1
             & Set-TargetResource @ContextParams
@@ -342,11 +440,11 @@ InModuleScope 'ResourceController' {
 
     Describe "Test-MaintenanceWindow" {
         Context "Calling Test-MaintenanceWindow outside of window Daily without time" {
-            Mock Get-Date {return [DateTime]::new("2018","01","02")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            Mock Get-Date {return [DateTime]::new("2018", "01", "02")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
-                                Frequency = 'Daily'
-                                DayofWeek = 'Monday'
-                            }
+                Frequency = 'Daily'
+                DayofWeek = 'Monday'
+            }
 
             $Window = & "Test-MaintenanceWindow" @ContextParams
 
@@ -356,13 +454,13 @@ InModuleScope 'ResourceController' {
         }
 
         Context "Calling Test-MaintenanceWindow outside of window Daily with time" {
-            Mock Get-Date {return [DateTime]::new("2018","01","01","11","31","0")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            Mock Get-Date {return [DateTime]::new("2018", "01", "01", "11", "31", "0")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
-                                Frequency = 'Daily'
-                                DayofWeek = 'Monday'
-                                StartTime = "11:00am"
-                                EndTime = "11:30am"
-                            }
+                Frequency = 'Daily'
+                DayofWeek = 'Monday'
+                StartTime = "11:00am"
+                EndTime   = "11:30am"
+            }
 
             $Window = & "Test-MaintenanceWindow" @ContextParams
 
@@ -372,12 +470,54 @@ InModuleScope 'ResourceController' {
         }
 
         Context "Calling Test-MaintenanceWindow outside of window Weekly without time" {
-            Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            Mock Get-Date {return [DateTime]::new("2018", "01", "01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
-                                Frequency = 'Weekly'
-                                DayofWeek = 'Monday'
-                                Week = @(2,3)
-                            }
+                Frequency = 'Weekly'
+                DayofWeek = 'Monday'
+                Week      = @(2, 3)
+            }
+
+            $Window = & "Test-MaintenanceWindow" @ContextParams
+
+            It 'Should return false' {
+                $window | should be $false
+            }
+        }
+
+        Context "Calling Test-MaintenanceWindow outside of window Weekly without DayofWeek" {
+            Mock Get-Date {return [DateTime]::new("2018", "01", "01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            $ContextParams = @{
+                Frequency = 'Weekly'
+                Week      = @(2, 3)
+            }
+
+            $Window = & "Test-MaintenanceWindow" @ContextParams
+
+            It 'Should return false' {
+                $window | should be $false
+            }
+        }
+        
+        Context "Calling Test-MaintenanceWindow outside of window Weekly without Week" {
+            Mock Get-Date {return [DateTime]::new("2018", "01", "02")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            $ContextParams = @{
+                Frequency = 'Weekly'
+                DayofWeek = 'Monday'
+            }
+
+            $Window = & "Test-MaintenanceWindow" @ContextParams
+
+            It 'Should return false' {
+                $window | should be $false
+            }
+        }
+        
+        Context "Calling Test-MaintenanceWindow outside of window Weekly with Week equal to 0" {
+            Mock Get-Date {return [DateTime]::new("2018", "01", "23")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            $ContextParams = @{
+                Frequency = 'Weekly'
+                Week      = '0'
+            }
 
             $Window = & "Test-MaintenanceWindow" @ContextParams
 
@@ -387,14 +527,14 @@ InModuleScope 'ResourceController' {
         }
 
         Context "Calling Test-MaintenanceWindow outside of window Weekly with time" {
-            Mock Get-Date {return [DateTime]::new("2018","01","01","11","31","0")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            Mock Get-Date {return [DateTime]::new("2018", "01", "01", "11", "31", "0")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
-                                Frequency = 'Weekly'
-                                DayofWeek = 'Monday'
-                                StartTime = "11:00am"
-                                EndTime = "11:30am"
-                                Week = @(1)
-                            }
+                Frequency = 'Weekly'
+                DayofWeek = 'Monday'
+                StartTime = "11:00am"
+                EndTime   = "11:30am"
+                Week      = @(1)
+            }
 
             $Window = & "Test-MaintenanceWindow" @ContextParams
 
@@ -404,11 +544,25 @@ InModuleScope 'ResourceController' {
         }
 
         Context "Calling Test-MaintenanceWindow outside of window Monthly without time" {
-            Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            Mock Get-Date {return [DateTime]::new("2018", "01", "01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
-                                Frequency = 'Monthly'
-                                Day = @(2,3,4)
-                            }
+                Frequency = 'Monthly'
+                Day       = @(2, 3, 4)
+            }
+
+            $Window = & "Test-MaintenanceWindow" @ContextParams
+
+            It 'Should return false' {
+                $window | should be $false
+            }
+        }
+
+        Context "Calling Test-MaintenanceWindow outside of window Monthly with last day of the month" {
+            Mock Get-Date {return [DateTime]::new("2018", "01", "01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            $ContextParams = @{
+                Frequency = 'Monthly'
+                Day       = 0
+            }
 
             $Window = & "Test-MaintenanceWindow" @ContextParams
 
@@ -418,13 +572,29 @@ InModuleScope 'ResourceController' {
         }
 
         Context "Calling Test-MaintenanceWindow outside of window Monthly with time" {
-            Mock Get-Date {return [DateTime]::new("2018","01","01","11","31","0")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            Mock Get-Date {return [DateTime]::new("2018", "01", "01", "11", "31", "0")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
-                                Frequency = 'Monthly'
-                                Day = 1
-                                StartTime = "11:00am"
-                                EndTime = "11:30am"
-                            }
+                Frequency = 'Monthly'
+                Day       = 1
+                StartTime = "11:00am"
+                EndTime   = "11:30am"
+            }
+
+            $Window = & "Test-MaintenanceWindow" @ContextParams
+
+            It 'Should return false' {
+                $window | should be $false
+            }
+        }
+
+        Context "Calling Test-MaintenanceWindow outside of window before start time" {
+            Mock Get-Date {return [DateTime]::new("2018", "01", "01", "10", "59", "0")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            $ContextParams = @{
+                Frequency = 'Daily'
+                Day       = 1
+                StartTime = "11:00am"
+                EndTime   = "11:30am"
+            }
 
             $Window = & "Test-MaintenanceWindow" @ContextParams
 
@@ -434,11 +604,24 @@ InModuleScope 'ResourceController' {
         }
 
         Context "Calling Test-MaintenanceWindow inside of window Daily without time" {
-            Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            Mock Get-Date {return [DateTime]::new("2018", "01", "01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
-                                Frequency = 'Daily'
-                                DayofWeek = 'Monday'
-                            }
+                Frequency = 'Daily'
+                DayofWeek = 'Monday'
+            }
+
+            $Window = & "Test-MaintenanceWindow" @ContextParams
+
+            It 'Should return true' {
+                $window | should be $true
+            }
+        }
+        
+        Context "Calling Test-MaintenanceWindow inside of window Daily without DayofWeek" {
+            Mock Get-Date {return [DateTime]::new("2018", "01", "01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            $ContextParams = @{
+                Frequency = 'Daily'
+            }
 
             $Window = & "Test-MaintenanceWindow" @ContextParams
 
@@ -448,13 +631,13 @@ InModuleScope 'ResourceController' {
         }
 
         Context "Calling Test-MaintenanceWindow inside of window Daily with time" {
-            Mock Get-Date {return [DateTime]::new("2018","01","01","11","25","0")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            Mock Get-Date {return [DateTime]::new("2018", "01", "01", "11", "25", "0")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
-                                Frequency = 'Daily'
-                                DayofWeek = 'Monday'
-                                StartTime = "11:00am"
-                                EndTime = "11:30am"
-                            }
+                Frequency = 'Daily'
+                DayofWeek = 'Monday'
+                StartTime = "11:00am"
+                EndTime   = "11:30am"
+            }
 
             $Window = & "Test-MaintenanceWindow" @ContextParams
 
@@ -464,12 +647,54 @@ InModuleScope 'ResourceController' {
         }
 
         Context "Calling Test-MaintenanceWindow inside of window Weekly without time" {
-            Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            Mock Get-Date {return [DateTime]::new("2018", "01", "01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
-                                Frequency = 'Weekly'
-                                DayofWeek = 'Monday'
-                                Week = @(1,2,3)
-                            }
+                Frequency = 'Weekly'
+                DayofWeek = 'Monday'
+                Week      = @(1, 2, 3)
+            }
+
+            $Window = & "Test-MaintenanceWindow" @ContextParams
+
+            It 'Should return true' {
+                $window | should be $true
+            }
+        }
+        
+        Context "Calling Test-MaintenanceWindow inside of window Weekly with Week equal to 0" {
+            Mock Get-Date {return [DateTime]::new("2018", "01", "29")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            $ContextParams = @{
+                Frequency = 'Weekly'
+                Week      = '0'
+            }
+
+            $Window = & "Test-MaintenanceWindow" @ContextParams
+
+            It 'Should return true' {
+                $window | should be $true
+            }
+        }
+
+        Context "Calling Test-MaintenanceWindow inside of window Weekly without DayofWeek" {
+            Mock Get-Date {return [DateTime]::new("2018", "01", "02")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            $ContextParams = @{
+                Frequency = 'Weekly'
+                Week      = @(1)
+            }
+
+            $Window = & "Test-MaintenanceWindow" @ContextParams
+
+            It 'Should return true' {
+                $window | should be $true
+            }
+        }
+
+        Context "Calling Test-MaintenanceWindow inside of window Weekly without DayofWeek" {
+            Mock Get-Date {return [DateTime]::new("2018", "01", "08")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            $ContextParams = @{
+                Frequency = 'Weekly'
+                DayofWeek = 'Monday'
+            }
 
             $Window = & "Test-MaintenanceWindow" @ContextParams
 
@@ -479,14 +704,14 @@ InModuleScope 'ResourceController' {
         }
 
         Context "Calling Test-MaintenanceWindow inside of window Weekly with time" {
-            Mock Get-Date {return [DateTime]::new("2018","01","01","11","27","0")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            Mock Get-Date {return [DateTime]::new("2018", "01", "01", "11", "27", "0")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
-                                Frequency = 'Weekly'
-                                DayofWeek = 'Monday'
-                                StartTime = "11:00am"
-                                EndTime = "11:30am"
-                                Week = @(1)
-                            }
+                Frequency = 'Weekly'
+                DayofWeek = 'Monday'
+                StartTime = "11:00am"
+                EndTime   = "11:30am"
+                Week      = @(1)
+            }
 
             $Window = & "Test-MaintenanceWindow" @ContextParams
 
@@ -496,11 +721,11 @@ InModuleScope 'ResourceController' {
         }
 
         Context "Calling Test-MaintenanceWindow inside of window Monthly without time" {
-            Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            Mock Get-Date {return [DateTime]::new("2018", "01", "01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
-                                Frequency = 'Monthly'
-                                Day = @(1,3,4)
-                            }
+                Frequency = 'Monthly'
+                Day       = @(1, 3, 4)
+            }
 
             $Window = & "Test-MaintenanceWindow" @ContextParams
 
@@ -510,13 +735,44 @@ InModuleScope 'ResourceController' {
         }
 
         Context "Calling Test-MaintenanceWindow inside of window Monthly with time" {
-            Mock Get-Date {return [DateTime]::new("2018","01","01","11","28","0")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            Mock Get-Date {return [DateTime]::new("2018", "01", "01", "11", "28", "0")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
-                                Frequency = 'Monthly'
-                                Day = 1
-                                StartTime = "11:00am"
-                                EndTime = "11:30am"
-                            }
+                Frequency = 'Monthly'
+                Day       = 1
+                StartTime = "11:00am"
+                EndTime   = "11:30am"
+            }
+
+            $Window = & "Test-MaintenanceWindow" @ContextParams
+
+            It 'Should return true' {
+                $window | should be $true
+            }
+        }
+
+        Context "Calling Test-MaintenanceWindow inside of window Monthly with no Day" {
+            Mock Get-Date {return [DateTime]::new("2018", "01", "01", "11", "28", "0")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            $ContextParams = @{
+                Frequency = 'Monthly'
+                StartTime = "11:00am"
+                EndTime   = "11:30am"
+            }
+
+            $Window = & "Test-MaintenanceWindow" @ContextParams
+
+            It 'Should return true' {
+                $window | should be $true
+            }
+        }
+
+        Context "Calling Test-MaintenanceWindow inside of window Monthly with last day of the month" {
+            Mock Get-Date {return [DateTime]::new("2018", "01", "31", "11", "28", "0")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            $ContextParams = @{
+                Frequency = 'Monthly'
+                Day       = 0
+                StartTime = "11:00am"
+                EndTime   = "11:30am"
+            }
 
             $Window = & "Test-MaintenanceWindow" @ContextParams
 
@@ -526,12 +782,12 @@ InModuleScope 'ResourceController' {
         }
 
         Context "Calling Test-MaintenanceWindow inside of window but before startdate" {
-            Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            Mock Get-Date {return [DateTime]::new("2018", "01", "01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
-                                Frequency = 'Monthly'
-                                Day = 1
-                                StartDate = "02-01-2018"
-                            }
+                Frequency = 'Monthly'
+                Day       = 1
+                StartDate = "02-01-2018"
+            }
 
             $Window = & "Test-MaintenanceWindow" @ContextParams
 
@@ -541,12 +797,12 @@ InModuleScope 'ResourceController' {
         }
 
         Context "Calling Test-MaintenanceWindow inside of window but after enddate" {
-            Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            Mock Get-Date {return [DateTime]::new("2018", "01", "01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
-                                Frequency = 'Monthly'
-                                Day = 1
-                                EndDate = "12-31-2017"
-                            }
+                Frequency = 'Monthly'
+                Day       = 1
+                EndDate   = "12-31-2017"
+            }
 
             $Window = & "Test-MaintenanceWindow" @ContextParams
 
@@ -556,12 +812,12 @@ InModuleScope 'ResourceController' {
         }
 
         Context "Calling Test-MaintenanceWindow inside of window but after Startdate no enddate" {
-            Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            Mock Get-Date {return [DateTime]::new("2018", "01", "01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
-                                Frequency = 'Monthly'
-                                Day = 1
-                                StartDate = "12-31-2017"
-                            }
+                Frequency = 'Monthly'
+                Day       = 1
+                StartDate = "12-31-2017"
+            }
 
             $Window = & "Test-MaintenanceWindow" @ContextParams
 
@@ -571,12 +827,12 @@ InModuleScope 'ResourceController' {
         }
 
         Context "Calling Test-MaintenanceWindow inside of window but before enddate no startdate" {
-            Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            Mock Get-Date {return [DateTime]::new("2018", "01", "01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
-                                Frequency = 'Monthly'
-                                Day = 1
-                                EndDate = "01-31-2018"
-                            }
+                Frequency = 'Monthly'
+                Day       = 1
+                EndDate   = "01-31-2018"
+            }
 
             $Window = & "Test-MaintenanceWindow" @ContextParams
 
@@ -586,13 +842,13 @@ InModuleScope 'ResourceController' {
         }
 
         Context "Calling Test-MaintenanceWindow inside of window and between start and end date" {
-            Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            Mock Get-Date {return [DateTime]::new("2018", "01", "01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
-                                Frequency = 'Monthly'
-                                Day = 1
-                                EndDate = "01-31-2018"
-                                StartDate = "12-31-2017"
-                            }
+                Frequency = 'Monthly'
+                Day       = 1
+                EndDate   = "01-31-2018"
+                StartDate = "12-31-2017"
+            }
 
             $Window = & "Test-MaintenanceWindow" @ContextParams
 
@@ -602,13 +858,13 @@ InModuleScope 'ResourceController' {
         }
 
         Context "Calling Test-MaintenanceWindow inside of window but not between start and end date" {
-            Mock Get-Date {return [DateTime]::new("2018","01","01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
+            Mock Get-Date {return [DateTime]::new("2018", "01", "01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
-                                Frequency = 'Monthly'
-                                Day = 1
-                                EndDate = "01-31-2018"
-                                StartDate = "01-15-2018"
-                            }
+                Frequency = 'Monthly'
+                Day       = 1
+                EndDate   = "01-31-2018"
+                StartDate = "01-15-2018"
+            }
 
             $Window = & "Test-MaintenanceWindow" @ContextParams
 
@@ -638,12 +894,12 @@ InModuleScope 'ResourceController' {
         Context "Calling Get-ValidParameter with no extra parameters" {
 
             $ContextParams = @{
-                                Name = 'Test-Function'
-                                Values = @{
-                                    Key = "TestRegistryKey"
-                                    ValueName = ""
-                                }
-                            }
+                Name   = 'Test-Function'
+                Values = @{
+                    Key       = "TestRegistryKey"
+                    ValueName = ""
+                }
+            }
 
             $params = Get-ValidParameter @ContextParams
 
@@ -655,13 +911,13 @@ InModuleScope 'ResourceController' {
         Context "Calling Get-ValidParameter with extra parameters" {
 
             $ContextParams = @{
-                                Name = 'Test-Function'
-                                Values = @{
-                                    Key = "TestRegistryKey"
-                                    ValueName = ""
-                                    Extra = ""
-                                }
-                            }
+                Name   = 'Test-Function'
+                Values = @{
+                    Key       = "TestRegistryKey"
+                    ValueName = ""
+                    Extra     = ""
+                }
+            }
 
             $params = & "Get-ValidParameter" @ContextParams
 
@@ -672,14 +928,14 @@ InModuleScope 'ResourceController' {
     }
 
     Describe "Assert-Validation" {
-        $Parameter = [System.Management.Automation.ParameterMetadata]::new("Name",'string')
-        $Parameter.Attributes.Add([System.Management.Automation.ValidateLengthAttribute]::new(1,3))
+        $Parameter = [System.Management.Automation.ParameterMetadata]::new("Name", 'string')
+        $Parameter.Attributes.Add([System.Management.Automation.ValidateLengthAttribute]::new(1, 3))
 
         Context "Calling Assert-Validation with value not meeting parameter requirements" {
             $ContextParams = @{
-                                element = 'Test'
-                                ParameterMetadata = $Parameter
-                            }
+                element           = 'Test'
+                ParameterMetadata = $Parameter
+            }
 
             It 'Should throw' {
                 { Assert-Validation @ContextParams } | should throw
@@ -689,9 +945,9 @@ InModuleScope 'ResourceController' {
         Context "Calling Assert-Validation with value meeting parameter requirements" {
 
             $ContextParams = @{
-                                element = 'Yes'
-                                ParameterMetadata = $Parameter
-                            }
+                element           = 'Yes'
+                ParameterMetadata = $Parameter
+            }
 
             It 'Should not throw' {
                 { Assert-Validation @ContextParams } | should not throw
@@ -720,11 +976,11 @@ InModuleScope 'ResourceController' {
 
             Mock -CommandName Assert-Validation -MockWith { throw "Error" }
             $ContextParams = @{
-                                Name = 'Test-Function'
-                                Values = @{
-                                    Key = "TestRegistryKey"
-                                }
-                            }
+                Name   = 'Test-Function'
+                Values = @{
+                    Key = "TestRegistryKey"
+                }
+            }
 
             It 'Should throw' {
                 { Test-ParameterValidation @ContextParams } | should throw
@@ -735,11 +991,11 @@ InModuleScope 'ResourceController' {
 
             Mock -CommandName Assert-Validation -MockWith {}
             $ContextParams = @{
-                                Name = 'Test-Function'
-                                Values = @{
-                                    Key = "TestRegistryKey"
-                                }
-                            }
+                Name   = 'Test-Function'
+                Values = @{
+                    Key = "TestRegistryKey"
+                }
+            }
 
             It 'Should throw' {
                 { Test-ParameterValidation @ContextParams } | should throw
@@ -750,15 +1006,56 @@ InModuleScope 'ResourceController' {
 
             Mock -CommandName Assert-Validation -MockWith {}
             $ContextParams = @{
-                                Name = 'Test-Function'
-                                Values = @{
-                                    Key = "TestRegistryKey"
-                                    ValueName = "Test"
-                                }
-                            }
+                Name   = 'Test-Function'
+                Values = @{
+                    Key       = "TestRegistryKey"
+                    ValueName = "Test"
+                }
+            }
 
             It 'Should not throw' {
                 { Test-ParameterValidation @ContextParams } | should not throw
+            }
+        }
+    }
+
+    Describe "ConvertTo-Hashtable" {
+        Context "Calling ConvertTo-Hashtable with no credentials" {
+            $htParam = @{
+                Param1 = 'Value1'
+                Param2 = 'Value2'
+                Param3 = 'Value3'
+            }
+
+            $return = ConvertTo-Hashtable -Hashtable $htParam
+
+            It 'Should return same hashtable' {
+                $return.Count  | should be 3
+                $return.Param1 | Should be 'Value1'
+                $return.Param2 | Should be 'Value2'
+                $return.Param3 | Should be 'Value3'
+            }
+        }
+
+        Context "Calling ConvertTo-Hashtable with credentials" {
+            $cred1 = New-CIMCredential -Name 'Credential1' -Username 'User1'
+            $cred2 = New-CIMCredential -Name 'Credential2' -Username 'User2'
+
+            $htParam = @{
+                Param1 = 'Value1'
+                Param2 = '[PSCredential]:Credential1'
+                Param3 = '[PSCredential]:Credential2'
+            }
+
+            $return = ConvertTo-Hashtable -Hashtable $htParam -Credentials @($cred1, $cred2)
+
+            It 'Should return same hashtable' {
+                $return.Count  | should be 3
+                $return.Param1 | Should be 'Value1'
+                $return.Param2.UserName | Should be 'User1'
+                $return.Param2.GetNetworkCredential().Password | Should be 'Password'
+                $return.Param3.UserName | Should be 'User2'
+                $return.Param3.GetNetworkCredential().Password | Should be 'Password'
             }
         }
     }

@@ -13,7 +13,7 @@
 
 # Version number of this module.
 
-ModuleVersion = '1.3.1'
+ModuleVersion = '2.0.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -46,7 +46,7 @@ Copyright = '(c) 2018 Matthew Collera. All rights reserved.'
 # DotNetFrameworkVersion = ''
 
 # Minimum version of the common language runtime (CLR) required by this module. This prerequisite is valid for the PowerShell Desktop edition only.
-# CLRVersion = ''
+ CLRVersion = '4.0'
 
 # Processor architecture (None, X86, Amd64) required by this module
 # ProcessorArchitecture = ''
@@ -82,7 +82,7 @@ VariablesToExport = '*'
 AliasesToExport = '*'
 
 # DSC resources to export from this module
-# DscResourcesToExport = @()
+ DscResourcesToExport = @('ResourceController')
 
 # List of all modules packaged with this module
 # ModuleList = @()

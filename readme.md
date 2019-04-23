@@ -29,7 +29,11 @@ Please check out common DSC Resources [contributing guidelines](
 
 * **[String] ResourceName**: The name of the resource you want to run.
 
-* **[Hashtable] Properties:** The properties you want to pass to the resource you want to run.
+* **[Scriptblock] Properties:** A Scriptblock that returns a Hashtable of the properties for the resource you are calling.
+  
+* **[Credential] Credentials:** Credentials you want to use as properties in the Properties Scriptblock.
+    * **[String] Name:** The name of the credential. Used to reference the credential in the properties.
+    * **[PSCredential] Credential:** The Credential object.
 
 * **[MaintenanceWindow] MaintenanceWindow:** Object representing a maintenance window
     DaysofWeek
@@ -52,6 +56,10 @@ Please check out common DSC Resources [contributing guidelines](
   https://github.com/mcollera/ResourceControllerDsc/blob/master/Examples/ResourceController_Examples.ps1)
 
 ## Versions
+
+### 2.0.0
+  * Added Credential object to use in the properties.
+  * Converted Properties from a Hashtable to a Scriptblock so it can handle more object types like arrays. If     you want to use a PsCredential then you set the value to [PsCredential]:< Name>. This will replace that        string with the credential object matching the name of the credential passed in the Credential parameter.
 
 ### 1.3.1
   Converted resource parameters to there desired type.

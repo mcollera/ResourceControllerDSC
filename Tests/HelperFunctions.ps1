@@ -24,6 +24,39 @@ function New-CIMProperty
     return New-CimInstance -ClientOnly @CimProperties
 }
 
+function New-CIMCredential
+{
+    param
+    (
+        [parameter(Mandatory = $true)]
+        [string]
+        $Name,
+
+        [parameter(Mandatory = $true)]
+        [string]
+        $UserName
+    )
+    $cimCredential = @{
+        Namespace = 'root/Microsoft/Windows/DesiredStateConfiguration'
+        ClassName = "MSFT_Credential"
+        Property = @{
+                        UserName = "$UserName"
+                        Password = "Password"
+                    }
+    }
+    $pscredential = New-CimInstance -ClientOnly @cimCredential
+
+    $CimProperties = @{
+        Namespace = 'root/Microsoft/Windows/DesiredStateConfiguration'
+        ClassName = "Credential"
+        Property = @{
+                        Name = "$Name"
+                        Credential = $pscredential
+                    }
+    }
+    return New-CimInstance -ClientOnly @CimProperties
+}
+
 function New-CIMWindow
 {
     param(
