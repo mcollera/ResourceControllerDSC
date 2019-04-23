@@ -15,9 +15,9 @@ ResourceController 'newtest'
     )
     Properties = {
         @{
-            Ensure      = 'Present'
-            Key      = 'HKLM:\System\Test'
-            ValueName    = 'Test'
+            Ensure    = 'Present'
+            Key       = 'HKLM:\System\Test'
+            ValueName = 'Test'
             ValueType = 'String'
             ValueData = '[PSCredential]:Cred1'
         }
