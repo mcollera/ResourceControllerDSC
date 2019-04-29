@@ -57,6 +57,9 @@ Please check out common DSC Resources [contributing guidelines](
 
 ## Versions
 
+### 2.0.1
+  * Removed parameter validation to avoid potential issues with ValidateScript
+
 ### 2.0.0
   * Added Credential object to use in the properties.
   * Converted Properties from a Hashtable to a Scriptblock so it can handle more object types like arrays. If     you want to use a PsCredential then you set the value to [PsCredential]:< Name>. This will replace that        string with the credential object matching the name of the credential passed in the Credential parameter.
