@@ -972,24 +972,8 @@ InModuleScope 'ResourceController' {
 
         }
 
-        Context "Calling Test-ParameterValidation with value not meeting parameter requirements" {
-
-            Mock -CommandName Assert-Validation -MockWith { throw "Error" }
-            $ContextParams = @{
-                Name   = 'Test-Function'
-                Values = @{
-                    Key = "TestRegistryKey"
-                }
-            }
-
-            It 'Should throw' {
-                { Test-ParameterValidation @ContextParams } | should throw
-            }
-        }
-
         Context "Calling Test-ParameterValidation with missing required parameter" {
 
-            Mock -CommandName Assert-Validation -MockWith {}
             $ContextParams = @{
                 Name   = 'Test-Function'
                 Values = @{
@@ -1004,7 +988,6 @@ InModuleScope 'ResourceController' {
 
         Context "Calling Test-ParameterValidation with value meeting parameter requirements" {
 
-            Mock -CommandName Assert-Validation -MockWith {}
             $ContextParams = @{
                 Name   = 'Test-Function'
                 Values = @{

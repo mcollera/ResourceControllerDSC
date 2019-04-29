@@ -499,7 +499,7 @@ function Test-ParameterValidation
         if ($ignoreResourceParameters -notcontains $name)
         {
             $metadata = $command.Parameters.$($name)
-            if ($($metadata.Attributes | Where-Object {$_.TypeId.Name -eq "ParameterAttribute"}).Mandatory)
+            if ($($metadata.Attributes | Where-Object {$_.TypeId.Name -eq "ParameterAttribute"}).Mandatory -and -not $Values.$($name))
             {
                 $errorMessage += "Parameter '$name' is mandatory."
             }
