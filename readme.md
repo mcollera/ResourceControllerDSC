@@ -29,8 +29,10 @@ Please check out common DSC Resources [contributing guidelines](
 
 * **[String] ResourceName**: The name of the resource you want to run.
 
+* **[String] ResourceModuleName**: (Optional) The name of the resource module that contains the resource you want to run.
+
 * **[Scriptblock] Properties:** A Scriptblock that returns a Hashtable of the properties for the resource you are calling.
-  
+
 * **[Credential] Credentials:** Credentials you want to use as properties in the Properties Scriptblock.
     * **[String] Name:** The name of the credential. Used to reference the credential in the properties.
     * **[PSCredential] Credential:** The Credential object.
@@ -56,6 +58,8 @@ Please check out common DSC Resources [contributing guidelines](
   https://github.com/mcollera/ResourceControllerDsc/blob/master/Examples/ResourceController_Examples.ps1)
 
 ## Versions
+### 2.0.2
+  * Added optional resource module name parameter to decrease resource import time during execution.
 
 ### 2.0.1
   * Removed parameter validation to avoid potential issues with ValidateScript
