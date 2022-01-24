@@ -1,15 +1,16 @@
 ResourceController 'newtest'
 {
-    InstanceName = 'newtest'
-    ResourceName = 'Registry'
-    ResourceVersion = '1.1'
-    Credentials = @(
+    InstanceName       = 'newtest'
+    ResourceName       = 'Registry'
+    ResourceModuleName = 'PSDscResources'
+    ResourceVersion    = '1.1'
+    Credentials        = @(
         Credential {
-            Name = 'Cred1'
+            Name       = 'Cred1'
             Credential = $cred
         }
         Credential {
-            Name = 'Cred2'
+            Name       = 'Cred2'
             Credential = $cred2
         }
     )

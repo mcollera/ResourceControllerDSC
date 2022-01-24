@@ -20,7 +20,7 @@ InModuleScope 'ResourceController' {
             $ResourceName = 'xRegistry2'
             Mock -CommandName Import-Module -MockWith {} -ModuleName $DSCResourceName
             Mock -CommandName Remove-Module -MockWith {} -ModuleName $DSCResourceName
-            Mock -CommandName Get-DSCResource -MockWith { 
+            Mock -CommandName Get-DSCResource -MockWith {
                 @{
                     Path         = 'FilePath'
                     Version      = '1.0'
@@ -29,25 +29,25 @@ InModuleScope 'ResourceController' {
                         @{
                             Name         = 'ValueName'
                             PropertyType = '[String]'
-                        },  
+                        },
                         @{
                             Name         = 'Key'
                             PropertyType = '[String]'
-                        },  
+                        },
                         @{
                             Name         = 'Ensure'
                             PropertyType = '[String]'
-                        },  
+                        },
                         @{
                             Name         = 'ValueData'
                             PropertyType = '[String]'
-                        },  
+                        },
                         @{
                             Name         = 'ValueType'
                             PropertyType = '[String]'
-                        }               
+                        }
                     )
-                } 
+                }
             } -ModuleName $DSCResourceName
             Mock -CommandName Test-ParameterValidation -MockWith {} -Verifiable -ModuleName $DSCResourceName
             Mock -CommandName Get-ValidParameter -MockWith {@{ValueName = 'Test2'; Key = 'HKEY_LOCAL_MACHINE\SOFTWARE\test'; ValueData = 'Test String'; ValueType = 'String'}} -ModuleName $DSCResourceName -Verifiable
@@ -85,7 +85,7 @@ InModuleScope 'ResourceController' {
             $ResourceName = 'xRegistry2'
             Mock -CommandName Import-Module -MockWith {} -ModuleName $DSCResourceName
             Mock -CommandName Remove-Module -MockWith {} -ModuleName $DSCResourceName
-            Mock -CommandName Get-DSCResource -MockWith { 
+            Mock -CommandName Get-DSCResource -MockWith {
                 @{
                     Path         = 'FilePath'
                     Version      = '1.0'
@@ -94,25 +94,25 @@ InModuleScope 'ResourceController' {
                         @{
                             Name         = 'ValueName'
                             PropertyType = '[String]'
-                        },  
+                        },
                         @{
                             Name         = 'Key'
                             PropertyType = '[String]'
-                        },  
+                        },
                         @{
                             Name         = 'Ensure'
                             PropertyType = '[String]'
-                        },  
+                        },
                         @{
                             Name         = 'ValueData'
                             PropertyType = '[String]'
-                        },  
+                        },
                         @{
                             Name         = 'ValueType'
                             PropertyType = '[String]'
-                        }               
+                        }
                     )
-                } 
+                }
             } -ModuleName $DSCResourceName
             Mock -CommandName Test-ParameterValidation -MockWith {throw 'Missing Mandatory parameter'} -Verifiable -ModuleName $DSCResourceName
             Mock -CommandName Get-ValidParameter -MockWith {@{ValueName = 'Test2'; Key = 'HKEY_LOCAL_MACHINE\SOFTWARE\test'; ValueData = 'Test String'; ValueType = 'String'}} -ModuleName $DSCResourceName -Verifiable
@@ -136,7 +136,7 @@ InModuleScope 'ResourceController' {
         function Test-xRegistry2TargetResource {}
         Mock -CommandName Import-Module -MockWith {} -ModuleName $DSCResourceName
         Mock -CommandName Remove-Module -MockWith {} -ModuleName $DSCResourceName
-        Mock -CommandName Get-DSCResource -MockWith { 
+        Mock -CommandName Get-DSCResource -MockWith {
             @{
                 Path         = 'FilePath'
                 Version      = '1.0'
@@ -145,25 +145,25 @@ InModuleScope 'ResourceController' {
                     @{
                         Name         = 'ValueName'
                         PropertyType = '[String]'
-                    },  
+                    },
                     @{
                         Name         = 'Key'
                         PropertyType = '[String]'
-                    },  
+                    },
                     @{
                         Name         = 'Ensure'
                         PropertyType = '[String]'
-                    },  
+                    },
                     @{
                         Name         = 'ValueData'
                         PropertyType = '[String]'
-                    },  
+                    },
                     @{
                         Name         = 'ValueType'
                         PropertyType = '[String]'
-                    }               
+                    }
                 )
-            } 
+            }
         } -ModuleName $DSCResourceName
 
         Context "Calling Test-TargetResource on xRegistry where Key does not exist" {
@@ -227,7 +227,39 @@ InModuleScope 'ResourceController' {
             }
         }
 
-        
+        Context "Calling Test-TargetResource on xRegistry where Key does exist and resource module name is provided" {
+            $ComputerName = Get-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName -Name ComputerName
+            Mock -CommandName Test-ParameterValidation -MockWith {} -Verifiable -ModuleName $DSCResourceName
+            Mock -CommandName Get-ValidParameter -MockWith {@{ValueType = 'String'; ValueData = "ComputerName"; ValueName = 'ComputerName'; Key = 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName'}} -ModuleName $DSCResourceName -Verifiable
+            Mock -CommandName Test-xRegistry2TargetResource -MockWith {return $true}
+            $ContextParams = @{
+                InstanceName       = 'Test'
+                ResourceName       = 'xRegistry2'
+                ResourceModuleName = 'DscModule'
+                ResourceVersion    = '1.0'
+                Properties         = "@{
+                                                    ValueName = 'ComputerName'
+                                                    Key       = 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName'
+                                                    ValueData = '$($ComputerName.ComputerName)'
+                                                    ValueType = 'String'
+                                                }"
+            }
+
+            $TestResult = & Test-TargetResource @ContextParams
+
+            It 'Should call Test-ParameterValidation once' {
+                Assert-MockCalled -CommandName 'Test-ParameterValidation' -ModuleName $DSCResourceName -Times 1 -Scope 'Context'
+            }
+
+            It 'Should call Get-ValidParameter once' {
+                Assert-MockCalled -CommandName 'Get-ValidParameter' -ModuleName $DSCResourceName -Times 1 -Scope 'Context'
+            }
+
+            It 'Should return true' {
+                $TestResult | Should Be $true
+            }
+        }
+
         Context "Calling Test-TargetResource on xRegistry missing mandatory params" {
             Mock -CommandName Test-ParameterValidation -MockWith {throw 'Missing Params'} -Verifiable -ModuleName $DSCResourceName
             Mock -CommandName Get-ValidParameter -MockWith {@{ValueType = 'String'; ValueData = "ComputerName"; ValueName = 'ComputerName'; Key = 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName'}} -ModuleName $DSCResourceName -Verifiable
@@ -251,7 +283,7 @@ InModuleScope 'ResourceController' {
         function Set-xRegistry2TargetResource {}
         Mock -CommandName Import-Module -MockWith {} -ModuleName $DSCResourceName
         Mock -CommandName Remove-Module -MockWith {} -ModuleName $DSCResourceName
-        Mock -CommandName Get-DSCResource -MockWith { 
+        Mock -CommandName Get-DSCResource -MockWith {
             @{
                 Path         = 'FilePath'
                 Version      = '1.0'
@@ -260,26 +292,27 @@ InModuleScope 'ResourceController' {
                     @{
                         Name         = 'ValueName'
                         PropertyType = '[String]'
-                    },  
+                    },
                     @{
                         Name         = 'Key'
                         PropertyType = '[String]'
-                    },  
+                    },
                     @{
                         Name         = 'Ensure'
                         PropertyType = '[String]'
-                    },  
+                    },
                     @{
                         Name         = 'ValueData'
                         PropertyType = '[String]'
-                    },  
+                    },
                     @{
                         Name         = 'ValueType'
                         PropertyType = '[String]'
-                    }               
+                    }
                 )
-            } 
+            }
         } -ModuleName $DSCResourceName
+
         Context "Calling Set-TargetResource on xRegistry inside maintenace window" {
             Mock -CommandName Test-ParameterValidation -MockWith {} -Verifiable -ModuleName $DSCResourceName
             Mock -CommandName Get-ValidParameter -MockWith {@{ValueName = 'Test'; Key = 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey'}} -ModuleName $DSCResourceName -Verifiable
@@ -294,6 +327,46 @@ InModuleScope 'ResourceController' {
                 ResourceName      = 'xRegistry2'
                 ResourceVersion   = '1.0'
                 Properties        = "@{
+                                                    ValueName = 'Test'
+                                                    Key       = 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey'
+                                                }"
+                MaintenanceWindow = $Windows
+            }
+
+            & Set-TargetResource @ContextParams
+
+            It 'Should call Test-ParameterValidation once' {
+                Assert-MockCalled -CommandName 'Test-ParameterValidation' -ModuleName $DSCResourceName -Times 1 -Scope 'Context'
+            }
+
+            It 'Should call Get-ValidParameter once' {
+                Assert-MockCalled -CommandName 'Get-ValidParameter' -ModuleName $DSCResourceName -Times 1 -Scope 'Context'
+            }
+
+            It 'Should call Set-xRegistryTargetResource once' {
+                Assert-MockCalled -CommandName 'Set-xRegistry2TargetResource' -Times 1 -Scope 'Context'
+            }
+
+            It 'Should call Test-MaintenanceWindow once' {
+                Assert-MockCalled -CommandName 'Test-MaintenanceWindow' -ModuleName $DSCResourceName -Times 1 -Scope 'Context'
+            }
+        }
+
+        Context "Calling Set-TargetResource on xRegistry inside maintenace window and resource module name is provided" {
+            Mock -CommandName Test-ParameterValidation -MockWith {} -Verifiable -ModuleName $DSCResourceName
+            Mock -CommandName Get-ValidParameter -MockWith {@{ValueName = 'Test'; Key = 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey'}} -ModuleName $DSCResourceName -Verifiable
+            Mock -CommandName Set-xRegistry2TargetResource -MockWith {}
+            Mock -CommandName Test-MaintenanceWindow -MockWith {$true} -ModuleName $DSCResourceName
+
+            $Windows = @(
+                New-CIMWindow -Frequency 'Daily'
+            )
+            $ContextParams = @{
+                InstanceName       = 'Test'
+                ResourceName       = 'xRegistry2'
+                ResourceModuleName = 'DscModule'
+                ResourceVersion    = '1.0'
+                Properties         = "@{
                                                     ValueName = 'Test'
                                                     Key       = 'HKEY_LOCAL_MACHINE\SOFTWARE\TestRegistryKey'
                                                 }"
@@ -497,7 +570,7 @@ InModuleScope 'ResourceController' {
                 $window | should be $false
             }
         }
-        
+
         Context "Calling Test-MaintenanceWindow outside of window Weekly without Week" {
             Mock Get-Date {return [DateTime]::new("2018", "01", "02")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
@@ -511,7 +584,7 @@ InModuleScope 'ResourceController' {
                 $window | should be $false
             }
         }
-        
+
         Context "Calling Test-MaintenanceWindow outside of window Weekly with Week equal to 0" {
             Mock Get-Date {return [DateTime]::new("2018", "01", "23")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
@@ -616,7 +689,7 @@ InModuleScope 'ResourceController' {
                 $window | should be $true
             }
         }
-        
+
         Context "Calling Test-MaintenanceWindow inside of window Daily without DayofWeek" {
             Mock Get-Date {return [DateTime]::new("2018", "01", "01")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{
@@ -660,7 +733,7 @@ InModuleScope 'ResourceController' {
                 $window | should be $true
             }
         }
-        
+
         Context "Calling Test-MaintenanceWindow inside of window Weekly with Week equal to 0" {
             Mock Get-Date {return [DateTime]::new("2018", "01", "29")} -ParameterFilter {$PSBoundParameters.Count -eq 0}
             $ContextParams = @{

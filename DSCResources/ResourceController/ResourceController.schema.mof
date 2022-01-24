@@ -3,7 +3,8 @@ class ResourceController : OMI_BaseResource
 {
     [Key] String InstanceName;
     [Required] String ResourceName;
-    [Write, Description("")] String Properties;    
+    [Write] String ResourceModuleName;
+    [Write, Description("")] String Properties;
     [Read, EmbeddedInstance("MSFT_KeyValuePair"), Description("")] String Result[];
     [Write] Boolean SuppressReboot;
     [Write, EmbeddedInstance("MaintenanceWindow")] string MaintenanceWindow[];
@@ -26,7 +27,7 @@ class MaintenanceWindow
 
 [ClassVersion("1.0.0.0")]
 class Credential
-{    
+{
     [Required] String Name;
     [Required,EmbeddedInstance("MSFT_Credential")] string Credential;
 };

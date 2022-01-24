@@ -19,6 +19,10 @@ function Get-TargetResource
 
         [Parameter()]
         [System.String]
+        $ResourceModuleName,
+
+        [Parameter()]
+        [System.String]
         $Properties,
 
         [Parameter()]
@@ -34,7 +38,7 @@ function Get-TargetResource
         $ResourceVersion,
 
         [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]] 
+        [Microsoft.Management.Infrastructure.CimInstance[]]
         $Credentials
     )
 
@@ -43,7 +47,14 @@ function Get-TargetResource
     $PropertiesHashTable = [scriptblock]::Create($Properties).Invoke()
     $PropertiesHashTable = ConvertTo-Hashtable -Hashtable $PropertiesHashTable -Credentials $Credentials
 
-    $dscResource = (Get-DscResource -Name $ResourceName).Where( {$_.Version -eq $ResourceVersion})[0]
+    if ($ResourceModuleName)
+    {
+        $dscResource = (Get-DscResource -Name $ResourceName -Module $ResourceModuleName).Where( {$_.Version -eq $ResourceVersion})[0]
+    }
+    else
+    {
+        $dscResource = (Get-DscResource -Name $ResourceName).Where( {$_.Version -eq $ResourceVersion})[0]
+    }
 
     try
     {
@@ -116,6 +127,10 @@ function Test-TargetResource
 
         [Parameter()]
         [System.String]
+        $ResourceModuleName,
+
+        [Parameter()]
+        [System.String]
         $Properties,
 
         [Parameter()]
@@ -131,7 +146,7 @@ function Test-TargetResource
         $ResourceVersion,
 
         [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]] 
+        [Microsoft.Management.Infrastructure.CimInstance[]]
         $Credentials
     )
 
@@ -140,7 +155,14 @@ function Test-TargetResource
     $PropertiesHashTable = [scriptblock]::Create($Properties).Invoke()
     $PropertiesHashTable = ConvertTo-Hashtable -Hashtable $PropertiesHashTable -Credentials $Credentials
 
-    $dscResource = (Get-DscResource -Name $ResourceName).Where( {$_.Version -eq $ResourceVersion})[0]
+    if ($ResourceModuleName)
+    {
+        $dscResource = (Get-DscResource -Name $ResourceName -Module $ResourceModuleName).Where( {$_.Version -eq $ResourceVersion})[0]
+    }
+    else
+    {
+        $dscResource = (Get-DscResource -Name $ResourceName).Where( {$_.Version -eq $ResourceVersion})[0]
+    }
 
     try
     {
@@ -186,6 +208,10 @@ function Set-TargetResource
 
         [Parameter()]
         [System.String]
+        $ResourceModuleName,
+
+        [Parameter()]
+        [System.String]
         $Properties,
 
         [Parameter()]
@@ -201,7 +227,7 @@ function Set-TargetResource
         $ResourceVersion,
 
         [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]] 
+        [Microsoft.Management.Infrastructure.CimInstance[]]
         $Credentials
     )
 
@@ -238,12 +264,19 @@ function Set-TargetResource
         return
     }
 
-    $functionName = "Set-TargetResource"    
+    $functionName = "Set-TargetResource"
 
     $PropertiesHashTable = [scriptblock]::Create($Properties).Invoke()
     $PropertiesHashTable = ConvertTo-Hashtable -Hashtable $PropertiesHashTable -Credentials $Credentials
 
-    $dscResource = (Get-DscResource -Name $ResourceName).Where( {$_.Version -eq $ResourceVersion})[0]
+    if ($ResourceModuleName)
+    {
+        $dscResource = (Get-DscResource -Name $ResourceName -Module $ResourceModuleName).Where( {$_.Version -eq $ResourceVersion})[0]
+    }
+    else
+    {
+        $dscResource = (Get-DscResource -Name $ResourceName).Where( {$_.Version -eq $ResourceVersion})[0]
+    }
 
     try
     {
@@ -550,7 +583,7 @@ function ConvertTo-Hashtable
         $Hashtable,
 
         [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]] 
+        [Microsoft.Management.Infrastructure.CimInstance[]]
         $Credentials
     )
 
@@ -561,7 +594,7 @@ function ConvertTo-Hashtable
         {
             $split = $Hashtable.$row -split ':', 2
             $credential = $Credentials | Where-Object -FilterScript { $_.Name -eq $split[1] } | Select-Object -First 1
-            
+
             $password = ConvertTo-SecureString -String $credential.Credential.Password -AsPlainText -Force
             $credentialObject = [PsCredential]::new($credential.Credential.UserName, $password)
 
